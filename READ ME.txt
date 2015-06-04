@@ -1,0 +1,19 @@
+Search Results can be found in \searchWoK\searchWoKResults
+
+Results consist of two .csv files and folders of WordCloud images.
+
+<name>MaterialsSearchCondensed.csv is a condensed version of the search data, viewable all in one page. It lists material name, # of WoK result publications, crystal system, space group, calculated band gap, and then numbers according to how many paper's abstracts the script found the respective keywords. 
+
+Clicking the material name or the keyword frequency numbers will bring you to the corresponding location in <name>MaterialsSearchFull.csv . This link will work as long as the ...Condensed.csv and ...Full.csv files are in the same folder.
+
+<name>MaterialsSearchFull.csv lists all of the information available. It holds all  of the aforementioned data in ...Condensed.csv in addition to having seperate links to the WoK search results page, the WordCloud image, and cells listed as keyword(#). Each of these cells is reference to a different paper (clicking the cell will bring you to the journal's page on the paper). 'keyword' is obviously the keyword that came up in the paper's abstract and # is the number of times it came up.
+
+The WoK results page link may not work the first time, as your browser needs to set up a session and get cookies from WoK. The second time in the same browser should work. The WordCloud image link will work as long as the <name> folder consisting of the images is in the same directory as <name>MaterialsSearchFull.csv. Lastly, some of the keyword(#) links may not work or may be listed as 'N/A' if the script couldn't find the journal link or the DOI.org server produced no results.
+
+
+If you would like to run the code, the following modules must be installed:
+http://www.crummy.com/software/BeautifulSoup/
+http://docs.python-requests.org/en/latest/
+https://github.com/amueller/word_cloud
+
+searchWoK.py holds all of the functions that you might actually call. searchWoKTools.py consists of functions that searchWoK uses but often run in the background.
