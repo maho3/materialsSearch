@@ -7,6 +7,17 @@ from urlparse import urlparse
 from wordcloud import WordCloud, STOPWORDS
 
 
+def pingmaterialsproject(material):
+    key = '0cVziFePTUfsawW8'
+
+    url = 'https://www.materialsproject.org/rest/v1/materials/'+material+'/vasp?API_KEY='+key
+
+    r = requests.get(url)
+
+    rdict = eval(r.text, {'true': 'true', 'false': 'false', 'null': 'null'})['response'][0]
+
+    return rdict
+
 def getsearchtype(searchtype):
     # Returns search code for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do
 
