@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    table,th,td    {height:20px;
+                text-align:center;
+                width: 100px;
+//                border: 1px solid black;
+                vertical-align: top}
+
+    th          {font-size: 150%;
+                font-weight: normal}
+</style>
+    <script>
+        function addQuerySet(set){
+            var queries = document.getElementById("queries");
+            if (set.checked){
+                switch(set.id){
+                    case "sulfides":
+                        queries.value += "<sulfides>";
+                        break;
+                    case "selenides":
+                        queries.value += "<selenides>";
+                        break;
+                    case "twoMetals":
+                        queries.value += "<twoMetals>";
+                        break;
+                    case "oxides":
+                        queries.value += "<oxides>";
+                        break;
+                }
+            } else {
+                switch(set.id){
+                    case "sulfides":
+                        queries.value = queries.value.replace("<sulfides>","");
+                        break;
+                    case "selenides":
+                        queries.value = queries.value.replace("<selenides>","");
+                        break;
+                    case "twoMetals":
+                        queries.value = queries.value.replace("<twoMetals>","");
+                        break;
+                    case "oxides":
+                        queries.value = queries.value.replace("<oxides>","");
+                        break;
+                }
+
+            }
+        }
+
+        function resetKeyDefault(){
+            document.getElementById("keywords").value = "<keywords>"
+        }
+
+    </script>
+</head>
+
+<body>
+<h1><u>Materials Search</u></h1>
+
+<p>Searches <i>Materials Project</i> and <i>Web of Knowledge</i> for relevant data with respect to finding promising
+    new candidates for superconductivity.</p>
+
+<hr>
+<form method="post" action="parsing_post.wsgi">
+    <table style="width:100%">
+        <tr>
+            <th colspan="6" style="text-align: left">Queries: </th>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="width:130px; text-align: left">Add sets:</td>
+            <td colspan="4" style="text-align: left">
+                <input type="checkbox" id="sulfides" onchange="addQuerySet(this)">sulfides
+                <input type="checkbox" id="selenides" onchange="addQuerySet(this)">selenides
+                <input type="checkbox" id="twoMetals" onchange="addQuerySet(this)">two metals
+                <input type="checkbox" id="oxides" onchange="addQuerySet(this)">oxides
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="width:130px; text-align: left">Add Permutations: </td>
+            <td><u>3d Orbitals</u></td>
+            <td><u>Chalcogen</u></td>
+            <td><u>Alkaline Earth</u></td>
+            <td style="width: auto"></td>
+        </tr>
+        <tr>
+            <td colspan="2"></td>
+            <td>
+                <input type="checkbox" id="V">V<br>
+                <input type="checkbox" id="Cr">Cr<br>
+                <input type="checkbox" id="Mn">Mn<br>
+                <input type="checkbox" id="Fe">Fe<br>
+                <input type="checkbox" id="Co">Co<br>
+                <input type="checkbox" id="Ni">Ni<br>
+                <input type="checkbox" id="Cu">Cu<br>
+            </td>
+            <td>
+                <input type="checkbox" id="Se">Se<br>
+                <input type="checkbox" id="S">S<br>
+                <input type="checkbox" id="O">O<br>
+            </td>
+            <td>
+                <input type="checkbox" id="La">La<br>
+                <input type="checkbox" id="Sr">Sr<br>
+                <input type="checkbox" id="Ba">Ba<br>
+                <input type="checkbox" id="Ca">Ca<br>
+                <input type="checkbox" id="k">K<br>
+                <input type="checkbox" id="Y">Y<br>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td colspan="5" style="text-align:left">
+                <textarea id="queries" rows="10" cols="60"></textarea>
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <th colspan="6" style="text-align: left">Keywords: </th>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td colspan="5" style="text-align:left">
+                <textarea id="keywords" rows="10" cols="60">keywords</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td colspan="2">
+                <button id="keyDefault" type="button" onclick="resetKeyDefault()">Reset Default</button>
+            </td>
+        </tr>
+        <tr style="height:25px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td>
+                <button type="submit">Submit</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+
+<hr>
+
+
+</body>
+</html>
+         

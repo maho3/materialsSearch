@@ -7,7 +7,7 @@ from urlparse import parse_qs
 html = """
 <html>
 <body>
-    <form method="get" action="parsing_get.wsgi">
+    <form method="post" action="parsing_post.wsgi">
         <p>
             Age: <input type="text" name="age">
             </p>
@@ -17,7 +17,7 @@ html = """
             <input name="hobbies" type="checkbox" value="tunning"> Auto Tunning
         </p>
         <p>
-        <input type="submit" value="Submit">
+            <input type="submit" value="Submit">
         </p>
     </form>
     <p>
@@ -29,7 +29,14 @@ html = """
 
 
 def application(environ, start_response):
-    d = parse_qs(environ['QUERY_STRING'])
+
+    try:
+        request_body_size = int(environ.get('CONTENT_LENGTH',0))
+    except ValueError:
+        request_body_size = 0
+
+    request_body = environ['wsgi.input'].read(request_body_size)
+    d = parse_qs(request_body)
 
     age = d.get('age', [''])[0]
     hobbies = d.get('hobbies', [])
