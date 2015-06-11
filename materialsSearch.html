@@ -8,51 +8,68 @@
 //                border: 1px solid black;
                 vertical-align: top}
 
-    th          {font-size: 150%;
+    th          {font-size: 150%%;
                 font-weight: normal}
 </style>
-    <script>
-        function addQuerySet(set){
-            var queries = document.getElementById("queries");
-            if (set.checked){
-                switch(set.id){
-                    case "sulfides":
-                        queries.value += "<sulfides>";
-                        break;
-                    case "selenides":
-                        queries.value += "<selenides>";
-                        break;
-                    case "twoMetals":
-                        queries.value += "<twoMetals>";
-                        break;
-                    case "oxides":
-                        queries.value += "<oxides>";
-                        break;
-                }
-            } else {
-                switch(set.id){
-                    case "sulfides":
-                        queries.value = queries.value.replace("<sulfides>","");
-                        break;
-                    case "selenides":
-                        queries.value = queries.value.replace("<selenides>","");
-                        break;
-                    case "twoMetals":
-                        queries.value = queries.value.replace("<twoMetals>","");
-                        break;
-                    case "oxides":
-                        queries.value = queries.value.replace("<oxides>","");
-                        break;
-                }
-
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script>
+    function addQuerySet(set){
+        var queries = document.getElementById("queries");
+        if (set.checked){
+            switch(set.value){
+                case "sulfides":
+                    queries.value += "<sulfides>";
+                    break;
+                case "selenides":
+                    queries.value += "<selenides>";
+                    break;
+                case "twoMetals":
+                    queries.value += "<twoMetals>";
+                    break;
+                case "oxides":
+                    queries.value += "<oxides>";
+                    break;
             }
-        }
+        } else {
+            switch(set.value){
+                case "sulfides":
+                    queries.value = queries.value.replace("<sulfides>","");
+                    break;
+                case "selenides":
+                    queries.value = queries.value.replace("<selenides>","");
+                    break;
+                case "twoMetals":
+                    queries.value = queries.value.replace("<twoMetals>","");
+                    break;
+                case "oxides":
+                    queries.value = queries.value.replace("<oxides>","");
+                    break;
+            }
 
-        function resetKeyDefault(){
-            document.getElementById("keywords").value = "<keywords>"
         }
+    }
 
-    </script>
+    function resetKeyDefault(){
+        document.getElementById("keywords").value = "<keywords>"
+    }
+
+    $(document).ready(function() {
+
+        $('#ajaxform').submit(function(event) {
+            url = $(this).attr( "action" );
+
+            event.preventDefault();
+            var posting = $.post(url,{
+                queries:$('input[name="queries"]').val(),
+                keywords:$('input[name="keywords"]').val()});
+
+            posting.done(function(data){
+                $("#response").empty().append(data);
+            });
+        });
+    });
+
+</script>
 </head>
 
 <body>
@@ -62,8 +79,8 @@
     new candidates for superconductivity.</p>
 
 <hr>
-<form method="post" action="parsing_post.wsgi">
-    <table style="width:100%">
+<form method="post" action="materialsSearch_Serv.py" id="ajaxform">
+    <table style="width:100%%">
         <tr>
             <th colspan="6" style="text-align: left">Queries: </th>
         </tr>
@@ -71,10 +88,10 @@
             <td style="width:10px"></td>
             <td style="width:130px; text-align: left">Add sets:</td>
             <td colspan="4" style="text-align: left">
-                <input type="checkbox" id="sulfides" onchange="addQuerySet(this)">sulfides
-                <input type="checkbox" id="selenides" onchange="addQuerySet(this)">selenides
-                <input type="checkbox" id="twoMetals" onchange="addQuerySet(this)">two metals
-                <input type="checkbox" id="oxides" onchange="addQuerySet(this)">oxides
+                <input type="checkbox" value="sulfides" onchange="addQuerySet(this)">sulfides
+                <input type="checkbox" value="selenides" onchange="addQuerySet(this)">selenides
+                <input type="checkbox" value="twoMetals" onchange="addQuerySet(this)">two metals
+                <input type="checkbox" value="oxides" onchange="addQuerySet(this)">oxides
             </td>
         </tr>
         <tr>
@@ -88,32 +105,32 @@
         <tr>
             <td colspan="2"></td>
             <td>
-                <input type="checkbox" id="V">V<br>
-                <input type="checkbox" id="Cr">Cr<br>
-                <input type="checkbox" id="Mn">Mn<br>
-                <input type="checkbox" id="Fe">Fe<br>
-                <input type="checkbox" id="Co">Co<br>
-                <input type="checkbox" id="Ni">Ni<br>
-                <input type="checkbox" id="Cu">Cu<br>
+                <input type="checkbox" value="V">V<br>
+                <input type="checkbox" value="Cr">Cr<br>
+                <input type="checkbox" value="Mn">Mn<br>
+                <input type="checkbox" value="Fe">Fe<br>
+                <input type="checkbox" value="Co">Co<br>
+                <input type="checkbox" value="Ni">Ni<br>
+                <input type="checkbox" value="Cu">Cu<br>
             </td>
             <td>
-                <input type="checkbox" id="Se">Se<br>
-                <input type="checkbox" id="S">S<br>
-                <input type="checkbox" id="O">O<br>
+                <input type="checkbox" value="Se">Se<br>
+                <input type="checkbox" value="S">S<br>
+                <input type="checkbox" value="O">O<br>
             </td>
             <td>
-                <input type="checkbox" id="La">La<br>
-                <input type="checkbox" id="Sr">Sr<br>
-                <input type="checkbox" id="Ba">Ba<br>
-                <input type="checkbox" id="Ca">Ca<br>
-                <input type="checkbox" id="k">K<br>
-                <input type="checkbox" id="Y">Y<br>
+                <input type="checkbox" value="La">La<br>
+                <input type="checkbox" value="Sr">Sr<br>
+                <input type="checkbox" value="Ba">Ba<br>
+                <input type="checkbox" value="Ca">Ca<br>
+                <input type="checkbox" value="K">K<br>
+                <input type="checkbox" value="Y">Y<br>
             </td>
         </tr>
         <tr>
             <td style="width:10px"></td>
             <td colspan="5" style="text-align:left">
-                <textarea id="queries" rows="10" cols="60"></textarea>
+                <textarea name="queries" id="queries" rows="10" cols="60" placeholder="Enter queries here..."></textarea>
             </td>
         </tr>
         <tr style="height:15px"></tr>
@@ -123,7 +140,7 @@
         <tr>
             <td style="width:10px"></td>
             <td colspan="5" style="text-align:left">
-                <textarea id="keywords" rows="10" cols="60">keywords</textarea>
+                <textarea name="keywords" id="keywords" rows="10" cols="60" placeholder="Enter keywords here..."></textarea>
             </td>
         </tr>
         <tr>
@@ -137,6 +154,11 @@
             <td style="width:10px"></td>
             <td>
                 <button type="submit">Submit</button>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5">
+                <p id="response"></p>
             </td>
         </tr>
     </table>
