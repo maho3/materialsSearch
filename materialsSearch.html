@@ -18,57 +18,140 @@
         if (set.checked){
             switch(set.value){
                 case "sulfides":
-                    queries.value += "<sulfides>";
+                    str=''
+                    for (var i=0; i<sulfides.length;i++){
+                        str += sulfides[i]+', ';
+                    } queries.value += str;
                     break;
                 case "selenides":
-                    queries.value += "<selenides>";
+                    str=''
+                    for (var i=0; i<selenides.length;i++){
+                        str += selenides[i]+', ';
+                    } queries.value += str;
                     break;
                 case "twoMetals":
-                    queries.value += "<twoMetals>";
+                    str=''
+                    for (var i=0; i<twoMetals.length;i++){
+                        str += twoMetals[i]+', ';
+                    } queries.value += str;
                     break;
                 case "oxides":
-                    queries.value += "<oxides>";
+                    str=''
+                    for (var i=0; i<oxides.length;i++){
+                        str += oxides[i]+', ';
+                    } queries.value += str;
                     break;
             }
         } else {
             switch(set.value){
                 case "sulfides":
-                    queries.value = queries.value.replace("<sulfides>","");
-                    break;
+                    for (var i=0; i<sulfides.length; i++){
+                        queries.value = queries.value.replace(sulfides[i]+', ',"");
+                    }break;
                 case "selenides":
-                    queries.value = queries.value.replace("<selenides>","");
-                    break;
+                    for (var i=0; i<selenides.length; i++){
+                        queries.value = queries.value.replace(selenides[i]+', ',"");
+                    }break;
                 case "twoMetals":
-                    queries.value = queries.value.replace("<twoMetals>","");
-                    break;
+                    for (var i=0; i<twoMetals.length; i++){
+                        queries.value = queries.value.replace(twoMetals[i]+', ',"");
+                    }break;
                 case "oxides":
-                    queries.value = queries.value.replace("<oxides>","");
-                    break;
+                    for (var i=0; i<oxides.length; i++){
+                        queries.value = queries.value.replace(oxides[i]+', ',"");
+                    }break;
             }
 
         }
     }
 
+    function addPermSet(chem){
+        var d = document.getElementsByName("3d");
+        var chal = document.getElementsByName("chal");
+        var ae = document.getElementsByName("ae");
+
+        var ds = [], chals = [], aes = [];
+
+        for (var i = 0; i < d.length; i++) {
+            if (d[i].checked){
+                ds.push(d[i]);
+            }
+        }
+        for (var i = 0; i < chal.length; i++) {
+            if (chal[i].checked){
+                chals.push(chal[i]);
+            }
+        }
+        for (var i = 0; i < ae.length; i++) {
+            if (ae[i].checked){
+                aes.push(ae[i]);
+            }
+        }
+
+        if (chem.name=="3d"){
+            ds=[chem];
+        } else if (chem.name=="chal"){
+            chals=[chem];
+        } else if (chem.name="ae"){
+            aes=[chem];
+        };
+
+        change=[];
+
+        for (var i = 0; i < ds.length; i++) {
+            for (var j = 0; j<chals.length; j++) {
+                for (var k = 0; k<aes.length; k++) {
+                    change.push('['+ds[i].value+','+chals[j].value+','+aes[k].value+']');
+                }
+            }
+        }
+
+        var queries = document.getElementById("queries");
+        if (chem.checked){
+            for (var i = 0; i<change.length; i++){
+                queries.value+=change[i]+', ';
+            }
+        } else {
+            for (var i = 0; i<change.length; i++){
+                queries.value = queries.value.replace(change[i]+', ','');
+            }
+        }
+    }
+
     function resetKeyDefault(){
-        document.getElementById("keywords").value = "<keywords>"
+        document.getElementById("keywords").value = keywords
     }
 
     $(document).ready(function() {
+        $.get("materialsSearch_Serv.py", {set:'sulfides'}, function(data){
+            sulfides=data.split("', '");
+        });
+        $.get("materialsSearch_Serv.py", {set:'selenides'}, function(data){
+            selenides=data.split("', '");
+        });
+        $.get("materialsSearch_Serv.py", {set:'twoMetals'}, function(data){
+            twoMetals=data.split("', '");
+        });
+        $.get("materialsSearch_Serv.py", {set:'oxides'}, function(data){
+            oxides=data.split("', '");
+        });
+        $.get("materialsSearch_Serv.py", {set:'keywords'}, function(data){
+            keywords=data.split("', '");
+        });
 
         $('#ajaxform').submit(function(event) {
             url = $(this).attr( "action" );
 
             event.preventDefault();
             var posting = $.post(url,{
-                queries:$('input[name="queries"]').val(),
-                keywords:$('input[name="keywords"]').val()});
+                queries:$('[name="queries"]').val(),
+                keywords:$('[name="keywords"]').val()});
 
             posting.done(function(data){
                 $("#response").empty().append(data);
             });
         });
     });
-
 </script>
 </head>
 
@@ -105,26 +188,26 @@
         <tr>
             <td colspan="2"></td>
             <td>
-                <input type="checkbox" value="V">V<br>
-                <input type="checkbox" value="Cr">Cr<br>
-                <input type="checkbox" value="Mn">Mn<br>
-                <input type="checkbox" value="Fe">Fe<br>
-                <input type="checkbox" value="Co">Co<br>
-                <input type="checkbox" value="Ni">Ni<br>
-                <input type="checkbox" value="Cu">Cu<br>
+                <input type="checkbox" name="3d" value="V" onchange="addPermSet(this)">V<br>
+                <input type="checkbox" name="3d" value="Cr" onchange="addPermSet(this)">Cr<br>
+                <input type="checkbox" name="3d" value="Mn" onchange="addPermSet(this)">Mn<br>
+                <input type="checkbox" name="3d" value="Fe" onchange="addPermSet(this)">Fe<br>
+                <input type="checkbox" name="3d" value="Co" onchange="addPermSet(this)">Co<br>
+                <input type="checkbox" name="3d" value="Ni" onchange="addPermSet(this)">Ni<br>
+                <input type="checkbox" name="3d" value="Cu" onchange="addPermSet(this)">Cu<br>
             </td>
             <td>
-                <input type="checkbox" value="Se">Se<br>
-                <input type="checkbox" value="S">S<br>
-                <input type="checkbox" value="O">O<br>
+                <input type="checkbox" name="chal" value="Se" onchange="addPermSet(this)">Se<br>
+                <input type="checkbox" name="chal" value="S" onchange="addPermSet(this)">S<br>
+                <input type="checkbox" name="chal" value="O" onchange="addPermSet(this)">O<br>
             </td>
             <td>
-                <input type="checkbox" value="La">La<br>
-                <input type="checkbox" value="Sr">Sr<br>
-                <input type="checkbox" value="Ba">Ba<br>
-                <input type="checkbox" value="Ca">Ca<br>
-                <input type="checkbox" value="K">K<br>
-                <input type="checkbox" value="Y">Y<br>
+                <input type="checkbox" name="ae" value="La" onchange="addPermSet(this)">La<br>
+                <input type="checkbox" name="ae" value="Sr" onchange="addPermSet(this)">Sr<br>
+                <input type="checkbox" name="ae" value="Ba" onchange="addPermSet(this)">Ba<br>
+                <input type="checkbox" name="ae" value="Ca" onchange="addPermSet(this)">Ca<br>
+                <input type="checkbox" name="ae" value="K" onchange="addPermSet(this)">K<br>
+                <input type="checkbox" name="ae" value="Y" onchange="addPermSet(this)">Y<br>
             </td>
         </tr>
         <tr>
