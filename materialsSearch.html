@@ -10,6 +10,10 @@
 
     th          {font-size: 150%%;
                 font-weight: normal}
+
+    .results    {border: 1px solid black;
+                border-collapse:collapse}
+
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <script>
@@ -119,7 +123,10 @@
     }
 
     function resetKeyDefault(){
-        document.getElementById("keywords").value = keywords
+        document.getElementById("keywords").value=''
+        for (var i = 0; i<keywords.length; i++) {
+            document.getElementById("keywords").value += keywords[i] + ', ';
+        }
     }
 
     $(document).ready(function() {
@@ -139,16 +146,27 @@
             keywords=data.split("', '");
         });
 
+        $('#showmp').click(function(){
+            if ($(this).text()=='Display MP Results'){
+                $(this).text('Hide MP Results');
+            } else {
+                $(this).text('Display MP Results');
+            };
+            $('#mpresults').toggle(500)
+        });
+
         $('#ajaxform').submit(function(event) {
             url = $(this).attr( "action" );
 
             event.preventDefault();
+
             var posting = $.post(url,{
                 queries:$('[name="queries"]').val(),
                 keywords:$('[name="keywords"]').val()});
 
             posting.done(function(data){
-                $("#response").empty().append(data);
+                $("#mpresults > tbody").empty().append(data);
+                $('#response').empty().append('done');
             });
         });
     });
@@ -167,6 +185,12 @@
         <tr>
             <th colspan="6" style="text-align: left">Queries: </th>
         </tr>
+        <tr>
+            <td colspan="6" style="text-align: left">Add chemical formulas to materials search query list seperated by
+                a comma and a space", ". Click the checkboxes to add preset material sets or to check <i>Materials Project</i>
+                for permutations of elements.</td>
+        </tr>
+        <tr style="height: 10px"></tr>
         <tr>
             <td style="width:10px"></td>
             <td style="width:130px; text-align: left">Add sets:</td>
@@ -221,6 +245,11 @@
             <th colspan="6" style="text-align: left">Keywords: </th>
         </tr>
         <tr>
+            <td colspan="6" style="text-align: left">Add keywords to search for in scientific abstracts seperated by a
+                comma and a space ", ". For a default list of common relevant keywords, click 'Reset Default' below.</td>
+        </tr>
+        <tr style="height: 10px"></tr>
+        <tr>
             <td style="width:10px"></td>
             <td colspan="5" style="text-align:left">
                 <textarea name="keywords" id="keywords" rows="10" cols="60" placeholder="Enter keywords here..."></textarea>
@@ -234,19 +263,33 @@
         </tr>
         <tr style="height:25px"></tr>
         <tr>
-            <td style="width:10px"></td>
-            <td>
-                <button type="submit">Submit</button>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="5">
-                <p id="response"></p>
+            <td style="width:5px"></td>
+            <td colspan="5" style="text-align:left">
+                <button type="submit" onclick="getElementById('response').innerHTML='Generating results... Please wait'">Search MP</button>
+                <button type="submit" onclick="getElementById('response').innerHTML='Generating results... Please wait'">Search WoK</button>
+                <button type="submit" onclick="getElementById('response').innerHTML='Generating results... Please wait'">Generate CSVs and WCs</button>
             </td>
         </tr>
     </table>
 </form>
+<hr>
+<div>
+    <h2>Results:</h2>
+    <p id="response">Server Status</p>
+    <button id="showmp">Display MP Results</button>
+    <table class="results" id="mpresults" style="width:100%; display:none">
+        <thead>
+        <tr class="results"><b>
+            <td class="results">Formula</td><td class="results">Full Formula</td><td class="results">Total Magnetization</td>
+            <td class="results">Formation Energy (eV)</td><td class="results">E Above Hull (eV)</td><td class="results">Band Gap (eV)</td>
+            <td class="results">Nsites</td><td class="results">Density (gm/cc)</td><td class="results">Volume</td><td class="results">Spacegroup</td><td class="results">CIF</td>
+        </b></tr>
+        </thead>
+        <tbody>
 
+        </tbody>
+    </table>
+</div>
 
 <hr>
 

@@ -8,15 +8,56 @@ from wordcloud import WordCloud, STOPWORDS
 
 
 def pingmaterialsproject(material):
+    print('Searching Materials Project for '+material+'...')
+
     key = '0cVziFePTUfsawW8'
 
     url = 'https://www.materialsproject.org/rest/v1/materials/'+material+'/vasp?API_KEY='+key
+    try:
+        r = requests.get(url)
 
-    r = requests.get(url)
-
-    rdict = eval(r.text, {'true': 'true', 'false': 'false', 'null': 'null'})['response'][0]
+        if r.status_code == 200:
+            rdict = r.json()['response']
+        else:
+            rdict = {}
+    except requests.ConnectionError:
+        rdict = {}
 
     return rdict
+
+def parsehtmlinput(querystring, keywordstring):
+    querylist = querystring.split(', ')
+    keylist = keywordstring.split(', ')
+
+    queries = []
+    queryperms = []
+
+    for n in range(len(querylist)):
+        marker = 0
+        for m in range(n + 1, len(querylist)):
+            if querylist[n] == querylist[m] or querylist[n] == '':
+                marker = 1
+                break
+        if marker == 0:
+            if querylist[n] == '':
+                pass
+            elif querylist[n][0] == '[':
+                queryperms.append(querylist[n][1:-1].split(','))
+            else:
+                queries.append(querylist[n])
+
+    keywords = []
+    for n in range(len(keylist)):
+        marker = 0
+        for m in range(n + 1, len(keylist)):
+            if keylist[n] == keylist[m]:
+                marker = 1
+                break
+        if marker == 0:
+            keylist[n] = keylist[n].replace('\\\\', '\\')
+            keywords.append(keylist[n])
+
+    return queries, queryperms, keywords
 
 def getsearchtype(searchtype):
     # Returns search code for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do

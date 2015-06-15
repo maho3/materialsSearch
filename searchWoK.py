@@ -28,6 +28,51 @@ def readsearchcriteria(filename):
         return rowlist
 
 
+def parsempdata(data):
+    resultstring = ''
+    for search in data:
+        for result in search:
+            cifpath = os.path.join(os.getcwd(), 'cifs', result['pretty_formula'] + '.cif')
+
+            with open(cifpath, 'wb') as f:
+                f.write(result['cif'])
+
+            resultstring += '<tr class="results">'
+            resultstring += '<td class="results">' + result['pretty_formula'] + '</td>'
+            resultstring += '<td class="results">' + result['full_formula'] + '</td>'
+            resultstring += '<td class="results">' + str(result['total_magnetization']) + '</td>'
+            resultstring += '<td class="results">' + str(result['formation_energy_per_atom']) + '</td>'
+            resultstring += '<td class="results">' + str(result['e_above_hull']) + '</td>'
+            resultstring += '<td class="results">' + str(result['band_gap']) + '</td>'
+            resultstring += '<td class="results">' + str(result['nsites']) + '</td>'
+            resultstring += '<td class="results">' + str(result['density']) + '</td>'
+            resultstring += '<td class="results">' + str(result['volume']) + '</td>'
+            resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '; ' + result['spacegroup']['number'] + '; ' + result['spacegroup']['point_group'] + '; ' + result['spacegroup']['crystal_system'] + '; ' + \
+                            result['spacegroup']['hall'] + '</td>'
+            resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
+                'pretty_formula'] + '\')">Get CIF</button></td>'
+            resultstring += '</tr>'
+    return resultstring
+
+
+def handlehtmlsearch_mp(querystring, keywordstring):
+    queries, permqueries, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
+
+    mpresults = []
+
+    for query in queries:
+        mpresults.append(searchWoKTools.pingmaterialsproject(query))
+
+    for permquery in permqueries:
+        pquer = permquery[0] + '-' + permquery[1] + '-' + permquery[2]
+        mpresults.append(searchWoKTools.pingmaterialsproject(pquer))
+
+    with open('mpresults.txt', 'wb') as outfile:
+        json.dump(mpresults, outfile)
+
+    return mpresults
+
+
 def viewdata(data):
     #  Prints out readable information of the output of getSearchData
 

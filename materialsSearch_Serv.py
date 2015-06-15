@@ -6,6 +6,7 @@ from wsgiref.simple_server import make_server
 from cgi import escape
 from urlparse import parse_qs
 import searchWoK
+import os
 
 def application(environ, start_response):
     try:
@@ -22,26 +23,31 @@ def application(environ, start_response):
 
         queries = escape(queries)
         keywords = escape(keywords)
-        print('test')
 
-        response_body = (queries or 'Empty') + (keywords or 'Empty')
+        mpsearch = searchWoK.handlehtmlsearch_mp(queries, keywords)
+
+        response_body = searchWoK.parsempdata(mpsearch)
 
     elif environ['REQUEST_METHOD'] == 'GET' and (len(environ['QUERY_STRING']) != 0):
         d = parse_qs(environ['QUERY_STRING'])
 
-        name = d['set'][0]
+        if 'set' in d.keys():
+            name = d['set'][0]
 
-        print(name)
+            setfull = searchWoK.readsearchcriteria(name)
+            setnames = []
 
-        setfull = searchWoK.readsearchcriteria(name)
-        setnames = []
+            for n in setfull:
+                setnames.append(n['material'])
 
-        for n in setfull:
-            setnames.append(n['material'])
+            response_body = str(setnames)[2:-2]
+        elif 'cif' in d.keys():
+            cifpath = os.path.join(os.getcwd(), 'cifs', d['cif'][0] + '.cif')
 
-        response_body = str(setnames)[2:-2]
+            with open(cifpath, 'rb') as f:
+                cif = f.read()
 
-        print('test')
+            response_body = cif
 
     else:
         with open('materialsSearch.html', 'r') as f:
@@ -53,8 +59,8 @@ def application(environ, start_response):
                         ('Content-Length', str(len(response_body)))]
     start_response(status, response_headers)
 
-    return [response_body]
+    return [response_body.encode('utf-8')]
 
-httpd = make_server('localhost', 8052, application)
+httpd = make_server('localhost', 8051, application)
 
 httpd.serve_forever()
