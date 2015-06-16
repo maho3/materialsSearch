@@ -47,30 +47,80 @@ def parsempdata(data):
             resultstring += '<td class="results">' + str(result['nsites']) + '</td>'
             resultstring += '<td class="results">' + str(result['density']) + '</td>'
             resultstring += '<td class="results">' + str(result['volume']) + '</td>'
-            resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '; ' + result['spacegroup']['number'] + '; ' + result['spacegroup']['point_group'] + '; ' + result['spacegroup']['crystal_system'] + '; ' + \
-                            result['spacegroup']['hall'] + '</td>'
+            resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '; ' + str(
+                result['spacegroup']['number']) + '; ' + result['spacegroup']['point_group'] + '; ' + \
+                result['spacegroup']['crystal_system'] + '; ' + str(result['spacegroup']['hall']) + '</td>'
             resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
                 'pretty_formula'] + '\')">Get CIF</button></td>'
             resultstring += '</tr>'
     return resultstring
 
+def parsewokkeys(keywords):
+    resultstring = '<td class="resultTitle">Material</td><td class="resultTitle">Publications</td>'
+
+    for key in keywords:
+        resultstring += '<td class="resultTitle">' + key + '</td>'
+
+    return resultstring
+
+def parsewokdata(wokdata, keydata):
+    resultstring = ''
+    for i in range(len(wokdata)):
+        resultstring += '<tr>'
+        resultstring += '<td class="results">' + wokdata[i][0]['pretty_formula'] + '</td>'
+        resultstring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
+
+        for key in keydata[i].keys():
+            numpapers = 0
+            for paper in keydata[i][key]:
+                if paper != 0:
+                    numpapers += 1
+
+            resultstring += '<td class="results">'
+            if numpapers != 0:
+                resultstring += str(numpapers)
+            resultstring += '</td>'
+
+        resultstring += '</tr>'
+
+    return resultstring
 
 def handlehtmlsearch_mp(querystring, keywordstring):
     queries, permqueries, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
 
+    with open('mpRecord.txt', 'rb') as record:
+        rec = record.read()
+        try:
+            rlist = json.loads(rec)
+        except ValueError:
+            rlist = {}
+
+    if 'queries' not in rlist.keys() or 'permqueries' not in rlist.keys():
+        rlist = {'queries': {}, 'permqueries': {}}
+
     mpresults = []
 
     for query in queries:
-        mpresults.append(searchWoKTools.pingmaterialsproject(query))
+        if query in rlist['queries'].keys():
+            mpresults.append(rlist['queries'][query])
+        else:
+            result = searchWoKTools.pingmaterialsproject(query)
+            rlist['queries'][query] = result
+            mpresults.append(result)
 
     for permquery in permqueries:
         pquer = permquery[0] + '-' + permquery[1] + '-' + permquery[2]
-        mpresults.append(searchWoKTools.pingmaterialsproject(pquer))
+        if pquer in rlist['permqueries'].keys():
+            mpresults.append(rlist['permqueries'][pquer])
+        else:
+            result = searchWoKTools.pingmaterialsproject(pquer)
+            rlist['permqueries'][pquer] = result
+            mpresults.append(result)
 
-    with open('mpresults.txt', 'wb') as outfile:
-        json.dump(mpresults, outfile)
+    with open('mpRecord.txt', 'wb') as record:
+        json.dump(rlist, record)
 
-    return mpresults
+    return mpresults, keywords
 
 
 def viewdata(data):
@@ -88,6 +138,42 @@ def viewdata(data):
             print(str(n) + ': ' + str(m[n]))
             i += 1
     print('\n')
+
+
+def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
+    mpsearch, keywords = handlehtmlsearch_mp(querystring, keywordstring)
+
+    with open('wokRecord.txt', 'rb') as record:
+        rec = record.read()
+        try:
+            wlist = json.loads(rec)
+        except ValueError:
+            wlist = {}
+
+    wokresults = []
+    for search in mpsearch:
+        for n in search:
+            searchparam = 'topic:'+n['pretty_formula'] + ' or topic:' + n['full_formula']
+
+            if searchparam in wlist.keys():
+                wokresults.append(wlist[searchparam])
+            else:
+                try:
+                    searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
+                except Exception:
+                    searchdata = ({}, [])
+                searchdata[0].update(n)
+                wlist[searchparam] = searchdata
+                wokresults.append(searchdata)
+
+    with open('wokRecord.txt', 'wb') as record:
+        json.dump(wlist, record)
+
+    keyresults = []
+    for search in wokresults:
+        keyresults.append(searchWoKTools.getkeylist(search, keywords))
+
+    return json.dumps([parsewokkeys(keywords), parsewokdata(wokresults, keyresults)])
 
 
 def savequerydata(searchcriteria, filename='', searchlimit=10):
@@ -110,7 +196,6 @@ def savequerydata(searchcriteria, filename='', searchlimit=10):
                     searchparam += 'topic:' + query.split(', ')[n]
                     if (criterion['numQueries'] > 1) and (n < (len(query.split(', ')) - 1)):
                         searchparam += ' or '
-                print searchparam
                 searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
                 searchdata[0].update(criterion)
                 querydata.append(searchdata)

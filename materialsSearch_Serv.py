@@ -20,13 +20,24 @@ def application(environ, start_response):
 
         queries = d.get('queries', [''])[0]
         keywords = d.get('keywords', [''])[0]
+        searchname = d.get('name', [''])[0]
+        searchlimit = d.get('searchlimit', [''])[0]
+        searchtype = d.get('searchtype', [''])[0]
 
         queries = escape(queries)
         keywords = escape(keywords)
+        searchname = escape(searchname)
+        searchlimit = escape(searchlimit)
+        searchtype = escape(searchtype)
 
-        mpsearch = searchWoK.handlehtmlsearch_mp(queries, keywords)
+        if searchtype == 'mp':
+            mpsearch, keyss = searchWoK.handlehtmlsearch_mp(queries, keywords)
 
-        response_body = searchWoK.parsempdata(mpsearch)
+            response_body = searchWoK.parsempdata(mpsearch)
+        elif searchtype == 'wok':
+            woksearch = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit))
+
+            response_body = woksearch
 
     elif environ['REQUEST_METHOD'] == 'GET' and (len(environ['QUERY_STRING']) != 0):
         d = parse_qs(environ['QUERY_STRING'])

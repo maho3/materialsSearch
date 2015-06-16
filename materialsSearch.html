@@ -13,6 +13,9 @@
 
     .results    {border: 1px solid black;
                 border-collapse:collapse}
+    .resultTitle{border: 1px solid black;
+                border-collapse:collapse;
+                font-weight: bold}
 
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -155,18 +158,39 @@
             $('#mpresults').toggle(500)
         });
 
-        $('#ajaxform').submit(function(event) {
-            url = $(this).attr( "action" );
+        $('#showwok').click(function(){
+            if ($(this).text()=='Display WoK Results'){
+                $(this).text('Hide WoK Results');
+            } else {
+                $(this).text('Display WoK Results');
+            };
+            $('#wokresults').toggle(500)
+        });
+
+        $('#mpbutton, #wokbutton, #csvbutton').click(function(event) {
+            $('#response').empty().append('Generating results... Please wait...');
+
+            url = $('#ajaxform').attr( "action" );
 
             event.preventDefault();
 
             var posting = $.post(url,{
                 queries:$('[name="queries"]').val(),
-                keywords:$('[name="keywords"]').val()});
+                keywords:$('[name="keywords"]').val(),
+                name:$('[name="searchname"]').val(),
+                searchlimit:$('[name="searchlimit"]').val(),
+                searchtype:$(this).val()});
 
             posting.done(function(data){
-                $("#mpresults > tbody").empty().append(data);
-                $('#response').empty().append('done');
+                $('#response').empty().append('Done!');
+
+                if (event.target.id == 'mpbutton'){
+                    $("#mpresults > tbody").empty().append(data);
+                } else if (event.target.id == 'wokbutton') {
+                    result = JSON.parse(data)
+                    $("#wokresults > thead > tr").empty().append(result[0])
+                    $("#wokresults > tbody").empty().append(result[1]);
+                }
             });
         });
     });
@@ -262,12 +286,17 @@
             </td>
         </tr>
         <tr style="height:25px"></tr>
+        <tr style="height:25px">
+            <td colspan="4" style="text-align:left">Enter a name for this search: <input type="text" name="searchname"></td>
+            <td colspan="2" style="text-align:left">Search limit: <input type="number" name="searchlimit" value="50"></td>
+        </tr>
+        <tr style="height:25px"></tr>
         <tr>
             <td style="width:5px"></td>
             <td colspan="5" style="text-align:left">
-                <button type="submit" onclick="getElementById('response').innerHTML='Generating results... Please wait'">Search MP</button>
-                <button type="submit" onclick="getElementById('response').innerHTML='Generating results... Please wait'">Search WoK</button>
-                <button type="submit" onclick="getElementById('response').innerHTML='Generating results... Please wait'">Generate CSVs and WCs</button>
+                <button type="submit" id="mpbutton" value="mp">Search MP</button>
+                <button type="submit" id="wokbutton" value="wok">Search WoK</button>
+                <button type="submit" id="csvbutton" value="csv">Generate CSVs and WCs</button>
             </td>
         </tr>
     </table>
@@ -276,14 +305,24 @@
 <div>
     <h2>Results:</h2>
     <p id="response">Server Status</p>
-    <button id="showmp">Display MP Results</button>
+    <button id="showmp">Display MP Results</button><button id="showwok">Display WoK Results</button>
     <table class="results" id="mpresults" style="width:100%; display:none">
         <thead>
-        <tr class="results"><b>
-            <td class="results">Formula</td><td class="results">Full Formula</td><td class="results">Total Magnetization</td>
-            <td class="results">Formation Energy (eV)</td><td class="results">E Above Hull (eV)</td><td class="results">Band Gap (eV)</td>
-            <td class="results">Nsites</td><td class="results">Density (gm/cc)</td><td class="results">Volume</td><td class="results">Spacegroup</td><td class="results">CIF</td>
-        </b></tr>
+        <tr class="results">
+            <td class="resultTitle">Formula</td><td class="resultTitle">Full Formula</td><td class="resultTitle">Total Magnetization</td>
+            <td class="resultTitle">Formation Energy (eV)</td><td class="resultTitle">E Above Hull (eV)</td><td class="resultTitle">Band Gap (eV)</td>
+            <td class="resultTitle">Nsites</td><td class="resultTitle">Density (gm/cc)</td><td class="resultTitle">Volume</td><td class="resultTitle">Spacegroup</td><td class="resultTitle">CIF</td>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+    <table class="results" id="wokresults" style="display:none">
+        <thead>
+        <tr class="results">
+
+        </tr>
         </thead>
         <tbody>
 

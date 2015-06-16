@@ -13,17 +13,19 @@ def pingmaterialsproject(material):
     key = '0cVziFePTUfsawW8'
 
     url = 'https://www.materialsproject.org/rest/v1/materials/'+material+'/vasp?API_KEY='+key
+    respdict = []
     try:
         r = requests.get(url)
-
         if r.status_code == 200:
             rdict = r.json()['response']
-        else:
-            rdict = {}
-    except requests.ConnectionError:
-        rdict = {}
+            for n in rdict:
+                if len(n['unit_cell_formula']) > 2:
+                    respdict.append(n)
 
-    return rdict
+    except requests.ConnectionError:
+        pass
+
+    return respdict
 
 def parsehtmlinput(querystring, keywordstring):
     querylist = querystring.split(', ')
@@ -54,8 +56,9 @@ def parsehtmlinput(querystring, keywordstring):
                 marker = 1
                 break
         if marker == 0:
-            keylist[n] = keylist[n].replace('\\\\', '\\')
-            keywords.append(keylist[n])
+            if keylist[n] != '':
+                keylist[n] = keylist[n].replace('\\\\', '\\')
+                keywords.append(keylist[n])
 
     return queries, queryperms, keywords
 
@@ -477,10 +480,10 @@ def getkeyfrequency(data, keyword):
 def getkeylist(data, keywords):
     # Iterates getKeyFrequency for each keyword; returns a dictionary of frequency lists corresponding to each keyword
 
-    datadict = []
+    datadict = {}
     for n in keywords:
         freq = getkeyfrequency(data, n)
-        datadict.append((n, freq))
+        datadict[n] = freq
 
     return datadict
 
