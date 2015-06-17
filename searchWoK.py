@@ -28,7 +28,7 @@ def readsearchcriteria(filename):
         return rowlist
 
 
-def parsempdata(data):
+def parsempdata(data, name, querystring, keystring):
     resultstring = ''
     for search in data:
         for result in search:
@@ -53,7 +53,7 @@ def parsempdata(data):
             resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
                 'pretty_formula'] + '\')">Get CIF</button></td>'
             resultstring += '</tr>'
-    return resultstring
+    return json.dumps([resultstring, name, querystring, keystring])
 
 def parsewokkeys(keywords):
     resultstring = '<td class="resultTitle">Material</td><td class="resultTitle">Publications</td>'
@@ -63,7 +63,7 @@ def parsewokkeys(keywords):
 
     return resultstring
 
-def parsewokdata(keywords, wokdata, keydata):
+def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
     resultstring = ''
     for i in range(len(wokdata)):
         resultstring += '<tr>'
@@ -83,7 +83,7 @@ def parsewokdata(keywords, wokdata, keydata):
 
         resultstring += '</tr>'
 
-    return json.dumps([parsewokkeys(keywords), resultstring])
+    return json.dumps([parsewokkeys(keywords), resultstring, name, querystring, keystring])
 
 def parseprevload(prevload):
     resultstring = ''
@@ -167,13 +167,74 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     return keywords, wokresults, keyresults
 
 def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
+    fulltitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Full.csv')
+    contitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Condensed.csv')
 
-    if searchname == '':
-        searchname
+    with open(fulltitle, 'wb') as csvFull, open(contitle, 'wb') as csvCon:
+        fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-    fulltitle = os.path.join(os.getcwd(), 'searchWoKResults', searchname + 'MaterialsKeySearchFull.csv')
-    contitle = os.path.join(os.getcwd(), 'searchWoKResults', searchname + 'MaterialsKeySearchCondensed.csv')
+        keywords, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit)
 
+        conheader = ['Material', 'Publications', 'Space Group', 'Calculated Band Gap']
+        for n in keywords:
+            conheader.append(n)
+        cwriter.writerow(conheader)
+
+        linenum = 0
+
+        for i in range(len(wokresults)):
+            searchdata = wokresults[i]
+
+            wc = searchWoKTools.generateabstractwc(searchdata)
+            imgpath = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname, searchdata[0]['pretty_formula'] + '.png')
+            wc.to_file(imgpath)
+
+            fwriter.writerow([searchdata[0]['pretty_formula'],
+                              str(searchdata[0]['numResults']) + ' publications',
+                              str(searchdata[0]['spacegroup']) + '  spacegroup',
+                              str(searchdata[0]['band_gap']) + '  band gap',
+                              searchdata[0]['searchURL'],
+                              '=HYPERLINK("' + imgpath + '","Word Cloud")'])
+            linenum += 1
+
+            conline = [
+                '=HYPERLINK("[' + fulltitle + ']' + searchname + 'Full' + '!A' + str(linenum) + '","' +
+                searchdata[0]['pretty_formula'] + '")',
+
+                str(searchdata[0]['numResults']),
+                str(searchdata[0]['spacegroup']),
+                str(searchdata[0]['band_gap'])]
+
+            fwriter.writerow([])
+            linenum += 1
+
+            for key in keyresults[i].keys():
+                keyrow = []
+                conkeynum = 0
+                for n in range(len(keyresults[i][key])):
+                    paper = keyresults[i][key][n]
+                    if paper != 0:
+                        cellstring = '=HYPERLINK("' + searchdata[1][n]['DOIlink'] + '","' + key + '(' + str(paper) + ')")'
+                        keyrow.append(cellstring)
+                        conkeynum += 1
+                if keyrow:
+                    fwriter.writerow(keyrow)
+                    linenum += 1
+                if conkeynum != 0:
+                    constring = '=HYPERLINK("[' + fulltitle + ']' + searchname + 'Full' + '!A' + str(
+                        linenum) + '","' + str(conkeynum) + '")'
+                    conline.append(constring)
+                else:
+                    conline.append('')
+
+            cwriter.writerow(conline)
+
+            fwriter.writerow([])
+            fwriter.writerow([])
+            linenum += 2
+
+    return os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)
 
 def viewdata(data):
     #  Prints out readable information of the output of getSearchData

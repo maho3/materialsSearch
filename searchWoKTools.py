@@ -492,11 +492,10 @@ def generateabstractwc(searchdata):
     stop = {'compound', 'angstrom', 'measurements', 'respectively', 'temperature', 't', 'k', 'show', 'element', 'ions',
             'degrees', 'structure', 'observed', 'c', 'p', 'n', 'a', 'pressure', 'nm', 'atoms', 'compounds', 'x'}
 
-    for n in searchdata[0]['material'].split(', '):
-        stop.add(n.lower())
-        for m in range(len(n)):
-            for o in range((m + 1), len(n)):
-                stop.add(n[m:o].lower())
+    stop.add(searchdata[0]['pretty_formula'].lower())
+    for m in range(len(searchdata[0]['pretty_formula'])):
+        for o in range((m + 1), len(searchdata[0]['pretty_formula'])):
+            stop.add(searchdata[0]['pretty_formula'][m:o].lower())
 
     stop.update(STOPWORDS)
 

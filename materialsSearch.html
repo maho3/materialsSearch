@@ -179,17 +179,46 @@
                 keywords:$('[name="keywords"]').val(),
                 name:$('[name="searchname"]').val(),
                 searchlimit:$('[name="searchlimit"]').val(),
+                load:$('#prevLoad option:selected').text(),
                 searchtype:$(this).val()});
 
             posting.done(function(data){
                 $('#response').empty().append('Done!');
 
                 if (event.target.id == 'mpbutton'){
-                    $("#mpresults > tbody").empty().append(data);
+                    result = JSON.parse(data);
+
+                    $('[name="queries"]').val(result[2])
+                    $('[name="keywords"]').val(result[3])
+                    $("#mpresults > tbody").empty().append(result[0]);
+                    $("#prevLoad").append($('<option>', {value: result[1]}).text(result[1]));
+
                 } else if (event.target.id == 'wokbutton') {
-                    result = JSON.parse(data)
-                    $("#wokresults > thead > tr").empty().append(result[0])
+                    result = JSON.parse(data);
+
+                    $('[name="queries"]').val(result[3])
+                    $('[name="keywords"]').val(result[4])
+                    $("#wokresults > thead > tr").empty().append(result[0]);
                     $("#wokresults > tbody").empty().append(result[1]);
+                    $("#prevLoad").append($('<option>', {value: result[2]}).text(result[2]));
+
+                } else if (event.target.id == 'csvbutton') {
+                    $('#response').empty().append("Done! CSV-WC's generated. Check " + data);
+
+                } else if (event.target.id == 'loadbutton') {
+                    var loadfile = $('#prevLoad option:selected').text()
+
+                    result = JSON.parse(data);
+
+                    $('[name="queries"]').val(result[3])
+                    $('[name="keywords"]').val(result[4])
+                    if (loadfile.substr(-7) == '_mp.txt'){
+                        $("#mpresults > tbody").empty().append(data);
+                    } else if (loadfile.substr(-8) == '_wok.txt'){
+                        result = JSON.parse(data);
+                        $("#wokresults > thead > tr").empty().append(result[0]);
+                        $("#wokresults > tbody").empty().append(result[1]);
+                    }
                 }
             });
         });

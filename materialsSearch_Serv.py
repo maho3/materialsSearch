@@ -7,7 +7,7 @@ from cgi import escape
 from urlparse import parse_qs
 import searchWoK
 import os
-from json import dump
+from json import dump, load
 
 def application(environ, start_response):
     try:
@@ -47,10 +47,10 @@ def application(environ, start_response):
 
             mpsearch, keys = searchWoK.handlehtmlsearch_mp(queries, keywords)
 
-            with open(os.path.join(os.getcwd(),'materialsSearchLoadFiles', searchname)) as outfile:
-                dump(mpsearch, outfile)
+            with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname), 'wb') as outfile:
+                dump([mpsearch, queries, keywords], outfile)
 
-            response_body = searchWoK.parsempdata(mpsearch)
+            response_body = searchWoK.parsempdata(mpsearch, searchname, queries, keywords)
 
         elif searchtype == 'wok':
             if searchname == '':
@@ -62,15 +62,41 @@ def application(environ, start_response):
             else:
                 searchname += '_wok.txt'
 
-            keywords, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit))
+            keys, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit))
 
-            with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname)) as outfile:
-                dump([wokdata, keydata], outfile)
+            with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname), 'wb') as outfile:
+                dump([keys, wokdata, keydata, queries, keywords], outfile)
 
-            response_body = searchWoK.parsewokdata(keywords, wokdata, keydata)
+            response_body = searchWoK.parsewokdata(keys, wokdata, keydata, searchname, queries, keywords)
         elif searchtype == 'csv':
+            prevcsv = next(os.walk(os.path.join(os.getcwd(), 'materialsSearchCSV-WC')))
+
+            if searchname == '':
+                while True:
+                    i += 1
+                    if 'search' + str(i) not in prevcsv:
+                        searchname = 'search' + str(i)
+                        break
+
+            if not os.path.exists(os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)):
+                os.makedirs(os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname))
 
             response_body = searchWoK.handlehtmlsearch_csv(queries, keywords, int(searchlimit), searchname)
+        elif searchtype == 'load':
+            loadsearch = d.get('load', [''])[0]
+
+            loadsearch = escape(loadsearch)
+
+            with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', loadsearch), 'rb') as f:
+                loaddata = load(f)
+
+            if loadsearch[-7:] == '_mp.txt':
+                response_body = searchWoK.parsempdata(loaddata[0], '', loaddata[1], loaddata[2])
+            elif loadsearch[-8:] == '_wok.txt':
+                response_body = searchWoK.parsewokdata(loaddata[0], loaddata[1], loaddata[2], '', loaddata[3], loaddata[4])
+            else:
+                start_response('500 INTERNAL SERVER ERROR', [('Content-Type', 'text/plain')])
+                return ['']
         else:
             start_response('500 INTERNAL SERVER ERROR', [('Content-Type', 'text/plain')])
             return ['']
