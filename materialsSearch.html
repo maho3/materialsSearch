@@ -167,7 +167,7 @@
             $('#wokresults').toggle(500)
         });
 
-        $('#mpbutton, #wokbutton, #csvbutton').click(function(event) {
+        $('#mpbutton, #wokbutton, #csvbutton, #loadbutton').click(function(event) {
             $('#response').empty().append('Generating results... Please wait...');
 
             url = $('#ajaxform').attr( "action" );
@@ -289,6 +289,15 @@
         <tr style="height:25px">
             <td colspan="4" style="text-align:left">Enter a name for this search: <input type="text" name="searchname"></td>
             <td colspan="2" style="text-align:left">Search limit: <input type="number" name="searchlimit" value="50"></td>
+        </tr>
+        <tr style="height:25px"></tr>
+        <tr style="height:25px">
+            <td colspan="4" style="text-align:left">Load a previous search:
+                <select id="prevLoad">
+                    [PRELOAD]
+                </select>
+                <button type="submit" id="loadbutton" value="load">Load</button>
+            </td>
         </tr>
         <tr style="height:25px"></tr>
         <tr>

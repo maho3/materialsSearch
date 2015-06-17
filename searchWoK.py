@@ -63,7 +63,7 @@ def parsewokkeys(keywords):
 
     return resultstring
 
-def parsewokdata(wokdata, keydata):
+def parsewokdata(keywords, wokdata, keydata):
     resultstring = ''
     for i in range(len(wokdata)):
         resultstring += '<tr>'
@@ -82,6 +82,14 @@ def parsewokdata(wokdata, keydata):
             resultstring += '</td>'
 
         resultstring += '</tr>'
+
+    return json.dumps([parsewokkeys(keywords), resultstring])
+
+def parseprevload(prevload):
+    resultstring = ''
+
+    for f in prevload:
+        resultstring += '<option value="' + f + '">' + f + '</option>'
 
     return resultstring
 
@@ -123,23 +131,6 @@ def handlehtmlsearch_mp(querystring, keywordstring):
     return mpresults, keywords
 
 
-def viewdata(data):
-    #  Prints out readable information of the output of getSearchData
-
-    print('_' * 50)
-    print('Number of Results: ' + str(data[0]['numResults']))
-    print('\nSearchURL: ' + data[0]['searchURL'])
-    print('_' * 50)
-
-    i = 1
-    for m in data[1]:
-        print(str(i) + '.  ')
-        for n in m:
-            print(str(n) + ': ' + str(m[n]))
-            i += 1
-    print('\n')
-
-
 def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     mpsearch, keywords = handlehtmlsearch_mp(querystring, keywordstring)
 
@@ -173,7 +164,32 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     for search in wokresults:
         keyresults.append(searchWoKTools.getkeylist(search, keywords))
 
-    return json.dumps([parsewokkeys(keywords), parsewokdata(wokresults, keyresults)])
+    return keywords, wokresults, keyresults
+
+def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
+
+    if searchname == '':
+        searchname
+
+    fulltitle = os.path.join(os.getcwd(), 'searchWoKResults', searchname + 'MaterialsKeySearchFull.csv')
+    contitle = os.path.join(os.getcwd(), 'searchWoKResults', searchname + 'MaterialsKeySearchCondensed.csv')
+
+
+def viewdata(data):
+    #  Prints out readable information of the output of getSearchData
+
+    print('_' * 50)
+    print('Number of Results: ' + str(data[0]['numResults']))
+    print('\nSearchURL: ' + data[0]['searchURL'])
+    print('_' * 50)
+
+    i = 1
+    for m in data[1]:
+        print(str(i) + '.  ')
+        for n in m:
+            print(str(n) + ': ' + str(m[n]))
+            i += 1
+    print('\n')
 
 
 def savequerydata(searchcriteria, filename='', searchlimit=10):
