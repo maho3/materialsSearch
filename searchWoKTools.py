@@ -303,9 +303,19 @@ def updatesc(searchcriteria):
         for m in range(n + 1, len(searchcriteria)):
             if searchcriteria[n]['material'] == searchcriteria[m]['material']:
                 marker = 1
-                searchcriteria[m]['crystalsystem'] += ', ' + searchcriteria[n]['crystalsystem']
-                searchcriteria[m]['spacegroup'] += ', ' + searchcriteria[n]['spacegroup']
-                searchcriteria[m]['bandgap'] += ', ' + searchcriteria[n]['bandgap']
+
+                for term in searchcriteria[n]['crystalsystem'].split(', '):
+                    if term not in searchcriteria[m]['crystalsystem']:
+                        searchcriteria[m]['crystalsystem'] += ', ' + term
+
+                for term in searchcriteria[n]['spacegroup'].split(', '):
+                    if term not in searchcriteria[m]['spacegroup']:
+                        searchcriteria[m]['spacegroup'] += ', ' + term
+
+                for term in searchcriteria[n]['bandgap'].split(', '):
+                    if term not in searchcriteria[m]['bandgap']:
+                        searchcriteria[m]['bandgap'] += ', ' + term
+
                 break
         if marker == 0:
             upcrit.append(searchcriteria[n])
@@ -484,18 +494,22 @@ def getkeylist(data, keywords):
     for n in keywords:
         freq = getkeyfrequency(data, n)
         datadict[n] = freq
-
     return datadict
 
 
 def generateabstractwc(searchdata):
     stop = {'compound', 'angstrom', 'measurements', 'respectively', 'temperature', 't', 'k', 'show', 'element', 'ions',
             'degrees', 'structure', 'observed', 'c', 'p', 'n', 'a', 'pressure', 'nm', 'atoms', 'compounds', 'x'}
-
-    stop.add(searchdata[0]['pretty_formula'].lower())
-    for m in range(len(searchdata[0]['pretty_formula'])):
-        for o in range((m + 1), len(searchdata[0]['pretty_formula'])):
-            stop.add(searchdata[0]['pretty_formula'][m:o].lower())
+    try:
+        stop.add(searchdata[0]['pretty_formula'].lower())
+        for m in range(len(searchdata[0]['pretty_formula'])):
+            for o in range((m + 1), len(searchdata[0]['pretty_formula'])):
+                stop.add(searchdata[0]['pretty_formula'][m:o].lower())
+    except KeyError:
+        stop.add(searchdata[0]['material'].lower())
+        for m in range(len(searchdata[0]['material'])):
+            for o in range((m + 1), len(searchdata[0]['material'])):
+                stop.add(searchdata[0]['material'][m:o].lower())
 
     stop.update(STOPWORDS)
 

@@ -18,11 +18,17 @@ def readsearchcriteria(filename):
         rowlist = []
         for row in reader:
             if i != 0:
-                rowdict = {'material': row[0],
-                           'crystalsystem': row[7],
-                           'spacegroup': row[8],
-                           'bandgap': row[9]}
-                rowlist.append(rowdict)
+                    for n in range(3, 15):
+                        if row[n] == 'monoclinic' or row[n] == 'cubic' or row[n] == 'trigonoal' or \
+                                        row[n] == 'hexagonal' or row[n] == 'tetragonal' or len(row[n]) > 4:
+
+                            rowdict = {'material': row[0], 'crystalsystem': row[n], 'spacegroup': row[n + 1],
+                                       'bandgap': row[n + 2]}
+
+                            rowlist.append(rowdict)
+
+                            break
+
             i += 1
 
         return rowlist
@@ -49,11 +55,12 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '<td class="results">' + str(result['volume']) + '</td>'
             resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '; ' + str(
                 result['spacegroup']['number']) + '; ' + result['spacegroup']['point_group'] + '; ' + \
-                result['spacegroup']['crystal_system'] + '; ' + str(result['spacegroup']['hall']) + '</td>'
+                            result['spacegroup']['crystal_system'] + '; ' + str(result['spacegroup']['hall']) + '</td>'
             resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
                 'pretty_formula'] + '\')">Get CIF</button></td>'
             resultstring += '</tr>'
     return json.dumps([resultstring, name, querystring, keystring])
+
 
 def parsewokkeys(keywords):
     resultstring = '<td class="resultTitle">Material</td><td class="resultTitle">Publications</td>'
@@ -62,6 +69,7 @@ def parsewokkeys(keywords):
         resultstring += '<td class="resultTitle">' + key + '</td>'
 
     return resultstring
+
 
 def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
     resultstring = ''
@@ -85,6 +93,7 @@ def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
 
     return json.dumps([parsewokkeys(keywords), resultstring, name, querystring, keystring])
 
+
 def parseprevload(prevload):
     resultstring = ''
 
@@ -92,6 +101,7 @@ def parseprevload(prevload):
         resultstring += '<option value="' + f + '">' + f + '</option>'
 
     return resultstring
+
 
 def handlehtmlsearch_mp(querystring, keywordstring):
     queries, permqueries, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
@@ -144,7 +154,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     wokresults = []
     for search in mpsearch:
         for n in search:
-            searchparam = 'topic:'+n['pretty_formula'] + ' or topic:' + n['full_formula']
+            searchparam = 'topic:' + n['pretty_formula'] + ' or topic:' + n['full_formula']
 
             if searchparam in wlist.keys():
                 wokresults.append(wlist[searchparam])
@@ -165,6 +175,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
         keyresults.append(searchWoKTools.getkeylist(search, keywords))
 
     return keywords, wokresults, keyresults
+
 
 def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
     fulltitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Full.csv')
@@ -187,7 +198,8 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
             searchdata = wokresults[i]
 
             wc = searchWoKTools.generateabstractwc(searchdata)
-            imgpath = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname, searchdata[0]['pretty_formula'] + '.png')
+            imgpath = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname,
+                                   searchdata[0]['pretty_formula'] + '.png')
             wc.to_file(imgpath)
 
             fwriter.writerow([searchdata[0]['pretty_formula'],
@@ -215,7 +227,8 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
                 for n in range(len(keyresults[i][key])):
                     paper = keyresults[i][key][n]
                     if paper != 0:
-                        cellstring = '=HYPERLINK("' + searchdata[1][n]['DOIlink'] + '","' + key + '(' + str(paper) + ')")'
+                        cellstring = '=HYPERLINK("' + searchdata[1][n]['DOIlink'] + '","' + key + '(' + str(
+                            paper) + ')")'
                         keyrow.append(cellstring)
                         conkeynum += 1
                 if keyrow:
@@ -235,6 +248,7 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
             linenum += 2
 
     return os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)
+
 
 def viewdata(data):
     #  Prints out readable information of the output of getSearchData
@@ -340,14 +354,13 @@ def generate_csv(filename='', datafile='queryData.txt', keywords=mainKeywords):
             fwriter.writerow([])
             linenum += 1
 
-            for key in keylist:
+            for key in keylist.keys():
                 keyrow = []
                 conkeynum = 0
-                for n in range(len(key[1])):
-                    result = key[1][n]
-                    if result != 0:
-                        cellstring = '=HYPERLINK("' + searchData[1][n]['DOIlink'] + '","' + key[0] + '(' + str(
-                            result) + ')")'
+                for n in range(len(keylist[key])):
+                    if keylist[key][n] != 0:
+                        cellstring = '=HYPERLINK("' + searchData[1][n]['DOIlink'] + '","' + key + '(' + str(
+                            keylist[key][n]) + ')")'
                         keyrow.append(cellstring)
                         conkeynum += 1
                 if keyrow:
