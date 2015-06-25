@@ -5,8 +5,8 @@
     table,th,td    {height:20px;
                 text-align:center;
                 width: 100px;
-//                border: 1px solid black;
-                vertical-align: top}
+                vertical-align: top;
+                border-collapse:collapse}
 
     th          {font-size: 150%%;
                 font-weight: normal}
@@ -14,8 +14,17 @@
     .results    {border: 1px solid black;
                 border-collapse:collapse}
     .resultTitle{border: 1px solid black;
-                border-collapse:collapse;
                 font-weight: bold}
+
+    .element     {border: 1px solid black;
+                width: 10px;
+                height: 10px;
+                cursor:pointer;
+                cursor:hand;
+                background:white}
+    .noelement   {width: 10px;
+                height: 10px;}
+    .selected    {background: green;}
 
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -27,25 +36,31 @@
                 case "sulfides":
                     str=''
                     for (var i=0; i<sulfides.length;i++){
-                        str += sulfides[i]+', ';
+                        str += sulfides[i]+'; ';
                     } queries.value += str;
                     break;
                 case "selenides":
                     str=''
                     for (var i=0; i<selenides.length;i++){
-                        str += selenides[i]+', ';
+                        str += selenides[i]+'; ';
                     } queries.value += str;
                     break;
                 case "twoMetals":
                     str=''
                     for (var i=0; i<twoMetals.length;i++){
-                        str += twoMetals[i]+', ';
+                        str += twoMetals[i]+'; ';
                     } queries.value += str;
                     break;
                 case "oxides":
                     str=''
                     for (var i=0; i<oxides.length;i++){
-                        str += oxides[i]+', ';
+                        str += oxides[i]+'; ';
+                    } queries.value += str;
+                    break;
+                case "vanadates":
+                    str=''
+                    for (var i=0; i<vanadates.length;i++){
+                        str += vanadates[i]+'; ';
                     } queries.value += str;
                     break;
             }
@@ -53,99 +68,104 @@
             switch(set.value){
                 case "sulfides":
                     for (var i=0; i<sulfides.length; i++){
-                        queries.value = queries.value.replace(sulfides[i]+', ',"");
+                        queries.value = queries.value.replace(sulfides[i]+'; ',"");
                     }break;
                 case "selenides":
                     for (var i=0; i<selenides.length; i++){
-                        queries.value = queries.value.replace(selenides[i]+', ',"");
+                        queries.value = queries.value.replace(selenides[i]+'; ',"");
                     }break;
                 case "twoMetals":
                     for (var i=0; i<twoMetals.length; i++){
-                        queries.value = queries.value.replace(twoMetals[i]+', ',"");
+                        queries.value = queries.value.replace(twoMetals[i]+'; ',"");
                     }break;
                 case "oxides":
                     for (var i=0; i<oxides.length; i++){
-                        queries.value = queries.value.replace(oxides[i]+', ',"");
+                        queries.value = queries.value.replace(oxides[i]+'; ',"");
+                    }break;
+                case "vanadates":
+                    for (var i=0; i<vanadates.length; i++){
+                        queries.value = queries.value.replace(vanadates[i]+'; ',"");
                     }break;
             }
 
-        }
-    }
-
-    function addPermSet(chem){
-        var d = document.getElementsByName("3d");
-        var chal = document.getElementsByName("chal");
-        var ae = document.getElementsByName("ae");
-
-        var ds = [], chals = [], aes = [];
-
-        for (var i = 0; i < d.length; i++) {
-            if (d[i].checked){
-                ds.push(d[i]);
-            }
-        }
-        for (var i = 0; i < chal.length; i++) {
-            if (chal[i].checked){
-                chals.push(chal[i]);
-            }
-        }
-        for (var i = 0; i < ae.length; i++) {
-            if (ae[i].checked){
-                aes.push(ae[i]);
-            }
-        }
-
-        if (chem.name=="3d"){
-            ds=[chem];
-        } else if (chem.name=="chal"){
-            chals=[chem];
-        } else if (chem.name="ae"){
-            aes=[chem];
-        };
-
-        change=[];
-
-        for (var i = 0; i < ds.length; i++) {
-            for (var j = 0; j<chals.length; j++) {
-                for (var k = 0; k<aes.length; k++) {
-                    change.push('['+ds[i].value+','+chals[j].value+','+aes[k].value+']');
-                }
-            }
-        }
-
-        var queries = document.getElementById("queries");
-        if (chem.checked){
-            for (var i = 0; i<change.length; i++){
-                queries.value+=change[i]+', ';
-            }
-        } else {
-            for (var i = 0; i<change.length; i++){
-                queries.value = queries.value.replace(change[i]+', ','');
-            }
         }
     }
 
     function resetKeyDefault(){
         document.getElementById("keywords").value=''
         for (var i = 0; i<keywords.length; i++) {
-            document.getElementById("keywords").value += keywords[i] + ', ';
+            document.getElementById("keywords").value += keywords[i] + '; ';
         }
     }
 
+    function sumPerm(){
+        var atext = $('#permtextA').val().split(", ");
+        var btext = $('#permtextB').val().split(", ");
+        var ctext = $('#permtextC').val().split(", ");
+        var dtext = $('#permtextD').val().split(", ");
+
+        atext = $.grep(atext, function(a) {
+            return a != '';
+        });
+        btext = $.grep(btext, function(a) {
+            return a != '';
+        });
+        ctext = $.grep(ctext, function(a) {
+            return a != '';
+        });
+        dtext = $.grep(dtext, function(a) {
+            return a != '';
+        });
+
+        var resString = ''
+
+        if (atext.length != 0) {
+            resString += '[' + atext.join() + ']';
+        }
+        if (btext.length != 0) {
+            resString += '[' + btext.join() + ']';
+        }
+        if (ctext.length != 0) {
+            resString += '[' + ctext.join() + ']';
+        }
+        if (dtext.length != 0) {
+            resString += '[' + dtext.join() + ']';
+        }
+
+        $('#permsum').val(resString);
+    }
+
+    if(typeof(EventSource) !== "undefined") {
+        var source = new EventSource("/update");
+        source.onmessage = function(event) {
+            $('#serverstatus').append(event.data + "&#13;&#10;")
+        };
+    } else {
+        $('#serverstatus').append("Your browser does not support server side live updates" + "&#13;&#10;")
+    }
+
+    var source = new EventSource("materialsSearch_Serv.py");
+    source.onmessage = function(event) {
+        $('#serverstatus').append(event.data + "<br>")
+    };
+
     $(document).ready(function() {
-        $.get("materialsSearch_Serv.py", {set:'sulfides'}, function(data){
+        $.get("/grabpresets", {set:'sulfides'}, function(data){
             sulfides=data.split("', '");
         });
-        $.get("materialsSearch_Serv.py", {set:'selenides'}, function(data){
+        $.get("/grabpresets", {set:'selenides'}, function(data){
             selenides=data.split("', '");
         });
-        $.get("materialsSearch_Serv.py", {set:'twoMetals'}, function(data){
+        $.get("/grabpresets", {set:'twoMetals'}, function(data){
             twoMetals=data.split("', '");
         });
-        $.get("materialsSearch_Serv.py", {set:'oxides'}, function(data){
+        $.get("/grabpresets", {set:'oxides'}, function(data){
             oxides=data.split("', '");
         });
-        $.get("materialsSearch_Serv.py", {set:'keywords'}, function(data){
+        $.get("/grabpresets", {set:'vanadates'}, function(data){
+            vanadates=data.split("', '");
+        });
+        $.get("/grabpresets", {set:'keywords'}, function(data){
             keywords=data.split("', '");
         });
 
@@ -158,6 +178,119 @@
             $('#mpresults').toggle(500)
         });
 
+        $('.element').click(function(){
+            var set = $("input[name=permset]:checked").val();
+
+            switch(set) {
+                case "A":
+                    if ($("#permtextA").val().includes($(this).text())){
+                        var s = $("#permtextA").val();
+                        s = s.replace($(this).text() + ', ','');
+                        s = s.replace($(this).text());
+                        $("#permtextA").val(s);
+                        $(this).css('background', 'white');
+                    } else {
+                        $(this).css('background', '#3366FF');
+                        $("#permtextA").val($("#permtextA").val() + $(this).text() + ', ');
+                    }
+                    break;
+                case "B":
+                    if ($("#permtextB").val().includes($(this).text())){
+                        var s = $("#permtextB").val();
+                        s = s.replace($(this).text() + ', ','');
+                        s = s.replace($(this).text());
+                        $("#permtextB").val(s);
+                        $(this).css('background', 'white');
+                    } else {
+                        $(this).css('background', '#FF5050');
+                        $("#permtextB").val($("#permtextB").val() + $(this).text() + ', ');
+                    }
+                    break;
+                case "C":
+                    if ($("#permtextC").val().includes($(this).text())){
+                        var s = $("#permtextC").val();
+                        s = s.replace($(this).text() + ', ','');
+                        s = s.replace($(this).text());
+                        $("#permtextC").val(s);
+                        $(this).css('background', 'white');
+                    } else {
+                        $(this).css('background', '#33CC33');
+                        $("#permtextC").val($("#permtextC").val() + $(this).text() + ', ');
+                    }
+                    break;
+                case "D":
+                    if ($("#permtextD").val().includes($(this).text())){
+                        var s = $("#permtextD").val();
+                        s = s.replace($(this).text() + ', ','');
+                        s = s.replace($(this).text());
+                        $("#permtextD").val(s);
+                        $(this).css('background', 'white');
+                    } else {
+                        $(this).css('background', '#FF00FF');
+                        $("#permtextD").val($("#permtextD").val() + $(this).text() + ', ');
+                    }
+                    break;
+            }
+
+            sumPerm();
+        });
+
+        $('#permtextA, #permtextB, #permtextC, #permtextD').on('input', sumPerm());
+
+        $("input[name=permset]").change(function(){
+            var set = $("input[name=permset]:checked").val()
+
+            var acolor = '#99CCFF', bcolor = '#FF9999', ccolor = '#99FF99', dcolor = '#FF99FF';
+
+            switch(set) {
+                case "A":
+                    acolor = '#3366FF';
+                    break;
+                case "B":
+                    bcolor = '#FF5050';
+                    break;
+                case "C":
+                    ccolor = '#33CC33';
+                    break;
+                case "D":
+                    dcolor = '#FF00FF';
+                    break;
+            }
+
+            $(".element").each(function(){
+                switch($(this).css('background-color')) {
+                    case "rgb(51, 102, 255)":
+                    case "rgb(153, 204, 255)":
+                        $(this).css('background',acolor);
+                        break;
+                    case "rgb(255, 80, 80)":
+                    case "rgb(255, 153, 153)":
+                        $(this).css('background',bcolor);
+                        break;
+                    case "rgb(51, 204, 51)":
+                    case "rgb(153, 255, 153)":
+                        $(this).css('background',ccolor);
+                        break;
+                    case "rgb(255, 0, 255)":
+                    case "rgb(255, 153, 255)":
+                        $(this).css('background',dcolor);
+                        break;
+                }
+            });
+        });
+
+        $('#addperm').click(function(){
+            $('#queries').val($('#queries').val() + $('#permsum').val() + '; ');
+            $("#permtextA").val('');
+            $("#permtextB").val('');
+            $("#permtextC").val('');
+            $("#permtextD").val('');
+            $("#permsum").val('');
+            $(".element").each(function(){
+                $(this).css('background', 'white');
+            });
+        });
+
         $('#showwok').click(function(){
             if ($(this).text()=='Display WoK Results'){
                 $(this).text('Hide WoK Results');
@@ -168,7 +301,7 @@
         });
 
         $('#mpbutton, #wokbutton, #csvbutton, #loadbutton').click(function(event) {
-            $('#response').empty().append('Generating results... Please wait...');
+            $('#serverstatus').empty().append('Generating results... Please wait...' + "&#13;&#10;");
 
             url = $('#ajaxform').attr( "action" );
 
@@ -183,41 +316,36 @@
                 searchtype:$(this).val()});
 
             posting.done(function(data){
-                $('#response').empty().append('Done!');
+                $('#serverstatus').append('Done!');
 
                 if (event.target.id == 'mpbutton'){
-                    result = JSON.parse(data);
 
-                    $('[name="queries"]').val(result[2])
-                    $('[name="keywords"]').val(result[3])
-                    $("#mpresults > tbody").empty().append(result[0]);
-                    $("#prevLoad").append($('<option>', {value: result[1]}).text(result[1]));
+                    $('[name="queries"]').val(data[2])
+                    $('[name="keywords"]').val(data[3])
+                    $("#mpresults > tbody").empty().append(data[0]);
+                    $("#prevLoad").append($('<option>', {value: data[1]}).text(data[1]));
 
                 } else if (event.target.id == 'wokbutton') {
-                    result = JSON.parse(data);
 
-                    $('[name="queries"]').val(result[3])
-                    $('[name="keywords"]').val(result[4])
-                    $("#wokresults > thead > tr").empty().append(result[0]);
-                    $("#wokresults > tbody").empty().append(result[1]);
-                    $("#prevLoad").append($('<option>', {value: result[2]}).text(result[2]));
+                    $('[name="queries"]').val(data[3])
+                    $('[name="keywords"]').val(data[4])
+                    $("#wokresults > thead > tr").empty().append(data[0]);
+                    $("#wokresults > tbody").empty().append(data[1]);
+                    $("#prevLoad").append($('<option>', {value: data[2]}).text(data[2]));
 
                 } else if (event.target.id == 'csvbutton') {
-                    $('#response').empty().append("Done! CSV-WC's generated. Check " + data);
+                    $('#response').empty().append("Done! CSV-WC's generated. Check " + data[0]);
 
                 } else if (event.target.id == 'loadbutton') {
                     var loadfile = $('#prevLoad option:selected').text()
 
-                    result = JSON.parse(data);
-
-                    $('[name="queries"]').val(result[3])
-                    $('[name="keywords"]').val(result[4])
+                    $('[name="queries"]').val(data[3])
+                    $('[name="keywords"]').val(data[4])
                     if (loadfile.substr(-7) == '_mp.txt'){
-                        $("#mpresults > tbody").empty().append(data);
+                        $("#mpresults > tbody").empty().append(data[0]);
                     } else if (loadfile.substr(-8) == '_wok.txt'){
-                        result = JSON.parse(data);
-                        $("#wokresults > thead > tr").empty().append(result[0]);
-                        $("#wokresults > tbody").empty().append(result[1]);
+                        $("#wokresults > thead > tr").empty().append(data[0]);
+                        $("#wokresults > tbody").empty().append(data[1]);
                     }
                 }
             });
@@ -233,63 +361,69 @@
     new candidates for superconductivity.</p>
 
 <hr>
-<form method="post" action="materialsSearch_Serv.py" id="ajaxform">
+<form method="post" action="/submit" id="ajaxform">
     <table style="width:100%%">
         <tr>
-            <th colspan="6" style="text-align: left">Queries: </th>
+            <th colspan="7" style="text-align: left">Queries: </th>
         </tr>
         <tr>
-            <td colspan="6" style="text-align: left">Add chemical formulas to materials search query list seperated by
-                a comma and a space", ". Click the checkboxes to add preset material sets or to check <i>Materials Project</i>
+            <td colspan="7" style="text-align: left">Add chemical formulas to materials search query list seperated by
+                a semicolon ";". Click the checkboxes to add preset material sets or to check <i>Materials Project</i>
                 for permutations of elements.</td>
         </tr>
         <tr style="height: 10px"></tr>
         <tr>
             <td style="width:10px"></td>
             <td style="width:130px; text-align: left">Add sets:</td>
-            <td colspan="4" style="text-align: left">
+            <td colspan="5" style="text-align: left">
                 <input type="checkbox" value="sulfides" onchange="addQuerySet(this)">sulfides
                 <input type="checkbox" value="selenides" onchange="addQuerySet(this)">selenides
                 <input type="checkbox" value="twoMetals" onchange="addQuerySet(this)">two metals
                 <input type="checkbox" value="oxides" onchange="addQuerySet(this)">oxides
+                <input type="checkbox" value="vanadates" onchange="addQuerySet(this)">vanadates
             </td>
         </tr>
+        <tr style="height:15px"></tr>
         <tr>
             <td style="width:10px"></td>
             <td style="width:130px; text-align: left">Add Permutations: </td>
-            <td><u>3d Orbitals</u></td>
-            <td><u>Chalcogen</u></td>
-            <td><u>Alkaline Earth</u></td>
-            <td style="width: auto"></td>
         </tr>
         <tr>
-            <td colspan="2"></td>
-            <td>
-                <input type="checkbox" name="3d" value="V" onchange="addPermSet(this)">V<br>
-                <input type="checkbox" name="3d" value="Cr" onchange="addPermSet(this)">Cr<br>
-                <input type="checkbox" name="3d" value="Mn" onchange="addPermSet(this)">Mn<br>
-                <input type="checkbox" name="3d" value="Fe" onchange="addPermSet(this)">Fe<br>
-                <input type="checkbox" name="3d" value="Co" onchange="addPermSet(this)">Co<br>
-                <input type="checkbox" name="3d" value="Ni" onchange="addPermSet(this)">Ni<br>
-                <input type="checkbox" name="3d" value="Cu" onchange="addPermSet(this)">Cu<br>
+            <td style="width:20px"></td>
+            <td colspan="4">
+                <table>
+                    <tr><td class="element">H</td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="element">He</td></tr>
+                    <tr><td class="element">Li</td><td class="element">Be</td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="element">B</td><td class="element">C</td><td class="element">N</td><td class="element">O</td><td class="element">F</td><td class="element">Ne</td></tr>
+                    <tr><td class="element">Na</td><td class="element">Mg</td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="element">Al</td><td class="element">Si</td><td class="element">P</td><td class="element">S</td><td class="element">Cl</td><td class="element">Ar</td></tr>
+                    <tr><td class="element">K</td><td class="element">Ca</td><td class="element">Sc</td><td class="element">Ti</td><td class="element">V</td><td class="element">Cr</td><td class="element">Mn</td><td class="element">Fe</td><td class="element">Co</td><td class="element">Ni</td><td class="element">Cu</td><td class="element">Zn</td><td class="element">Ga</td><td class="element">Ge</td><td class="element">As</td><td class="element">Se</td><td class="element">Br</td><td class="element">Kr</td></tr>
+                    <tr><td class="element">Rb</td><td class="element">Sr</td><td class="element">Y</td><td class="element">Zr</td><td class="element">Nb</td><td class="element">Mo</td><td class="element">Tc</td><td class="element">Ru</td><td class="element">Rh</td><td class="element">Pd</td><td class="element">Ag</td><td class="element">Cd</td><td class="element">In</td><td class="element">Sn</td><td class="element">Sb</td><td class="element">Te</td><td class="element">I</td><td class="element">Xe</td></tr>
+                    <tr><td class="element">Cs</td><td class="element">Ba</td><td class="noelement"></td><td class="element">Hf</td><td class="element">Ta</td><td class="element">W</td><td class="element">Re</td><td class="element">Os</td><td class="element">Ir</td><td class="element">Pt</td><td class="element">Au</td><td class="element">Hg</td><td class="element">Tl</td><td class="element">Pb</td><td class="element">Bi</td><td class="element">Po</td><td class="element">At</td><td class="element">Rn</td></tr>
+                    <tr><td class="element">Fr</td><td class="element">Ra</td><td class="noelement"></td><td class="element">Rf</td><td class="element">Db</td><td class="element">Sg</td><td class="element">Bh</td><td class="element">Hs</td><td class="element">Mt</td><td class="element">Ds</td><td class="element">Rg</td><td class="element">Cn</td></tr>
+                    <tr style="height:10px"></tr>
+                    <tr><td class="noelement"></td><td class="noelement"></td><td class="element">La</td><td class="element">Ce</td><td class="element">Pr</td><td class="element">Nd</td><td class="element">Pm</td><td class="element">Sm</td><td class="element">Eu</td><td class="element">Gd</td><td class="element">Tb</td><td class="element">Dy</td><td class="element">Ho</td><td class="element">Er</td><td class="element">Tm</td><td class="element">Yb</td><td class="element">Lu</td></tr>
+                    <tr><td class="noelement"></td><td class="noelement"></td><td class="element">Ac</td><td class="element">Th</td><td class="element">Pa</td><td class="element">U</td><td class="element">Np</td><td class="element">Pu</td><td class="element">Am</td><td class="element">Cm</td><td class="element">Bk</td><td class="element">Cf</td><td class="element">Es</td><td class="element">Fm</td><td class="element">Md</td><td class="element">No</td><td class="element">Lr</td></tr>
+                </table>
             </td>
-            <td>
-                <input type="checkbox" name="chal" value="Se" onchange="addPermSet(this)">Se<br>
-                <input type="checkbox" name="chal" value="S" onchange="addPermSet(this)">S<br>
-                <input type="checkbox" name="chal" value="O" onchange="addPermSet(this)">O<br>
-            </td>
-            <td>
-                <input type="checkbox" name="ae" value="La" onchange="addPermSet(this)">La<br>
-                <input type="checkbox" name="ae" value="Sr" onchange="addPermSet(this)">Sr<br>
-                <input type="checkbox" name="ae" value="Ba" onchange="addPermSet(this)">Ba<br>
-                <input type="checkbox" name="ae" value="Ca" onchange="addPermSet(this)">Ca<br>
-                <input type="checkbox" name="ae" value="K" onchange="addPermSet(this)">K<br>
-                <input type="checkbox" name="ae" value="Y" onchange="addPermSet(this)">Y<br>
+            <td style="width:30px"></td>
+            <td colspan="2" style="text-align:left">
+                <u>Set</u><br>
+                <input type="radio" name="permset" value="A">A
+                <input type="text" name="permtext" id="permtextA"> <br>
+                <input type="radio" name="permset" value="B">B
+                <input type="text" name="permtext" id="permtextB"><br>
+                <input type="radio" name="permset" value="C">C
+                <input type="text" name="permtext" id="permtextC"><br>
+                <input type="radio" name="permset" value="D">D
+                <input type="text" name="permtext" id="permtextD">
+                <br> <br>
+                ABCD = <input type="text" name="permsum" id="permsum" readonly> <br>
+                <input type="button" name="addperm" id="addperm" value="Add Permutation">
             </td>
         </tr>
         <tr>
             <td style="width:10px"></td>
-            <td colspan="5" style="text-align:left">
+            <td colspan="6" style="text-align:left">
+                <br>
                 <textarea name="queries" id="queries" rows="10" cols="60" placeholder="Enter queries here..."></textarea>
             </td>
         </tr>
@@ -342,8 +476,8 @@
 <hr>
 <div>
     <h2>Results:</h2>
-    <p id="response">Server Status</p>
-    <button id="showmp">Display MP Results</button><button id="showwok">Display WoK Results</button>
+    <textarea id="serverstatus" rows="10" cols="60" placeholder="SERVER UPDATES HERE" readonly></textarea><br><br>
+    <button id="showmp">Display MP Results</button><button id="showwok">Display WoK Results</button><br><br>
     <table class="results" id="mpresults" style="width:100%; display:none">
         <thead>
         <tr class="results">
@@ -356,6 +490,7 @@
 
         </tbody>
     </table>
+    <br><br>
     <table class="results" id="wokresults" style="display:none">
         <thead>
         <tr class="results">

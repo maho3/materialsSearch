@@ -13,23 +13,20 @@ mainKeywords = ['superconduct', 'conduct', 'resist', 'metal', 'insulator', 'dope
 
 def readsearchcriteria(filename):
     with open(os.path.join(os.getcwd(), 'search_criteria', filename + '.csv'), 'rb') as f:
-        reader = csv.reader(f)
-        i = 0
+        reader = list(csv.reader(f))
         rowlist = []
         for row in reader:
-            if i != 0:
-                    for n in range(3, 15):
-                        if row[n] == 'monoclinic' or row[n] == 'cubic' or row[n] == 'trigonoal' or \
-                                        row[n] == 'hexagonal' or row[n] == 'tetragonal' or len(row[n]) > 4:
+            if row[0] != '' and row[0] != 'formula':
+                rowdict = {'material': row[0]}
 
-                            rowdict = {'material': row[0], 'crystalsystem': row[n], 'spacegroup': row[n + 1],
-                                       'bandgap': row[n + 2]}
+                for n in range(3, 10):
+                    if row[n] == 'monoclinic' or row[n] == 'cubic' or row[n] == 'trigonoal' or \
+                                    row[n] == 'hexagonal' or row[n] == 'tetragonal' or len(row[n]) > 4:
 
-                            rowlist.append(rowdict)
-
-                            break
-
-            i += 1
+                        rowdict.update({'crystalsystem': row[n], 'spacegroup': row[n + 1],
+                                   'bandgap': row[n + 2]})
+                        break
+                rowlist.append(rowdict)
 
         return rowlist
 
@@ -106,7 +103,7 @@ def parseprevload(prevload):
 def handlehtmlsearch_mp(querystring, keywordstring):
     queries, permqueries, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
 
-    with open('mpRecord.txt', 'rb') as record:
+    with open('mpRecord.json', 'rb') as record:
         rec = record.read()
         try:
             rlist = json.loads(rec)
@@ -127,15 +124,48 @@ def handlehtmlsearch_mp(querystring, keywordstring):
             mpresults.append(result)
 
     for permquery in permqueries:
-        pquer = permquery[0] + '-' + permquery[1] + '-' + permquery[2]
-        if pquer in rlist['permqueries'].keys():
-            mpresults.append(rlist['permqueries'][pquer])
-        else:
-            result = searchWoKTools.pingmaterialsproject(pquer)
-            rlist['permqueries'][pquer] = result
-            mpresults.append(result)
+        permlist = permquery[1:-1].split('][')
 
-    with open('mpRecord.txt', 'wb') as record:
+        for i in range(len(permlist)):
+            permlist[i] = permlist[i].split(',')
+
+        lenperms = 1
+
+        for n in permlist:
+            lenperms *= len(n)
+
+        queryarray = []
+        for i in range(lenperms):
+            queryarray.append([])
+
+        repeat = 1
+
+        for n in range(len(permlist)):
+            elemlist = permlist[n]
+            divlen = lenperms/len(elemlist)
+            listmarker = 0
+
+            for rep in range(repeat):
+                for elem in elemlist:
+                    for i in range(listmarker, listmarker + divlen):
+                        queryarray[i].append(elem)
+                    listmarker += divlen
+
+            lenperms = divlen
+            repeat *= len(permlist[n])
+
+        print queryarray
+        for query in queryarray:
+            search = '-'.join(query)
+
+            if search in rlist['queries'].keys():
+                mpresults.append(rlist['queries'][search])
+            else:
+                result = searchWoKTools.pingmaterialsproject(search, len(query))
+                rlist['queries'][search] = result
+                mpresults.append(result)
+
+    with open('mpRecord.json', 'wb') as record:
         json.dump(rlist, record)
 
     return mpresults, keywords
@@ -144,7 +174,7 @@ def handlehtmlsearch_mp(querystring, keywordstring):
 def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     mpsearch, keywords = handlehtmlsearch_mp(querystring, keywordstring)
 
-    with open('wokRecord.txt', 'rb') as record:
+    with open('wokRecord.json', 'rb') as record:
         rec = record.read()
         try:
             wlist = json.loads(rec)
@@ -167,7 +197,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
                 wlist[searchparam] = searchdata
                 wokresults.append(searchdata)
 
-    with open('wokRecord.txt', 'wb') as record:
+    with open('wokRecord.json', 'wb') as record:
         json.dump(wlist, record)
 
     keyresults = []
@@ -247,7 +277,7 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
             fwriter.writerow([])
             linenum += 2
 
-    return os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)
+    return json.dumps([os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)])
 
 
 def viewdata(data):

@@ -7,7 +7,7 @@ from urlparse import urlparse
 from wordcloud import WordCloud, STOPWORDS
 
 
-def pingmaterialsproject(material):
+def pingmaterialsproject(material, matlength):
     print('Searching Materials Project for '+material+'...')
 
     key = '0cVziFePTUfsawW8'
@@ -19,7 +19,7 @@ def pingmaterialsproject(material):
         if r.status_code == 200:
             rdict = r.json()['response']
             for n in rdict:
-                if len(n['unit_cell_formula']) > 2:
+                if len(n['unit_cell_formula']) == matlength:
                     respdict.append(n)
 
     except requests.ConnectionError:
@@ -28,8 +28,19 @@ def pingmaterialsproject(material):
     return respdict
 
 def parsehtmlinput(querystring, keywordstring):
-    querylist = querystring.split(', ')
-    keylist = keywordstring.split(', ')
+    querystring = querystring.replace(' ', '')
+    querylist = querystring.split(';')
+
+    keylist = keywordstring.split(';')
+
+    for i in range(len(keylist)):
+        try:
+            if keylist[i][0] == ' ':
+                keylist[i] = keylist[i][1:]
+            if keylist[i][-1] == ' ':
+                keylist[i] = keylist[i][:-1]
+        except IndexError:
+            pass
 
     queries = []
     queryperms = []
@@ -44,7 +55,7 @@ def parsehtmlinput(querystring, keywordstring):
             if querylist[n] == '':
                 pass
             elif querylist[n][0] == '[':
-                queryperms.append(querylist[n][1:-1].split(','))
+                queryperms.append(querylist[n])
             else:
                 queries.append(querylist[n])
 

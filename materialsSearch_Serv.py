@@ -2,14 +2,70 @@ __author__ = 'eager55'
 
 #!/cygdrive/c/python27/python.exe
 
-from wsgiref.simple_server import make_server
+from gevent.pywsgi import WSGIServer
+from flask import Flask, Response, request
 from cgi import escape
 from urlparse import parse_qs
 import searchWoK
+import searchWoKTools
 import os
 from json import dump, load
 
-def application(environ, start_response):
+class ServerSentEvent(object):
+
+    def __init__(self, data):
+        self.data = data
+        self.event = None
+        self.id = None
+        self.desc_map = {
+            self.data : "data",
+            self.event : "event",
+            self.id : "id"
+        }
+
+    def encode(self):
+        if not self.data:
+            return ""
+        lines = ["%s: %s" % (v, k)
+                 for k, v in self.desc_map.iteritems() if k]
+
+        return "%s\n\n" % "\n".join(lines)
+
+app = Flask(__name__)
+
+@app.route("/")
+def returnhtml():
+    prevload = os.listdir(os.path.join(os.getcwd(), 'materialsSearchLoadFiles'))
+    with open('materialsSearch.html', 'r') as f:
+            return f.read().replace('[PRELOAD]', searchWoK.parseprevload(prevload))
+
+@app.route("/grabpresets")
+def grabpresets():
+    name = request.args.get('set')
+
+    setfull = searchWoK.readsearchcriteria(name)
+    setfull = searchWoKTools.updatesc(setfull)
+
+    setnames = []
+
+    for n in setfull:
+        setnames.append(n['material'])
+
+    return str(setnames)[2:-2]
+
+@app.route("/getcif")
+def getcif():
+    cifname = request.args.get('cif')
+
+    cifpath = os.path.join(os.getcwd(), 'cifs', cifname + '.cif')
+
+    with open(cifpath, 'rb') as f:
+        cif = f.read()
+
+    return cif
+
+@app.route("/submit", methods=['GET', 'POST'])
+def mainapp(environ, start_response):
     try:
         request_body_size = int(environ.get('CONTENT_LENGTH', 0))
     except ValueError:
@@ -101,6 +157,8 @@ def application(environ, start_response):
             start_response('500 INTERNAL SERVER ERROR', [('Content-Type', 'text/plain')])
             return ['']
 
+        response_headers = [('Content-Type', 'application/json')]
+
     elif environ['REQUEST_METHOD'] == 'GET' and (len(environ['QUERY_STRING']) != 0):
         d = parse_qs(environ['QUERY_STRING'])
 
@@ -108,6 +166,8 @@ def application(environ, start_response):
             name = d['set'][0]
 
             setfull = searchWoK.readsearchcriteria(name)
+            setfull = searchWoKTools.updatesc(setfull)
+
             setnames = []
 
             for n in setfull:
@@ -125,18 +185,29 @@ def application(environ, start_response):
             start_response('500 INTERNAL SERVER ERROR', [('Content-Type', 'text/plain')])
             return ['']
 
+        response_headers = [('Content-Type', 'text/html')]
+
     else:
         with open('materialsSearch.html', 'r') as f:
             response_body = f.read().replace('[PRELOAD]', searchWoK.parseprevload(prevload))
 
+        response_headers = [('Content-Type', 'text/html')]
+
     status = '200 OK'
 
-    response_headers = [('Content-Type', 'text/html'),
-                        ('Content-Length', str(len(response_body)))]
+    response_headers.append(('Content-Length', str(len(response_body))))
     start_response(status, response_headers)
 
     return [response_body.encode('utf-8')]
 
-httpd = make_server('localhost', 8051, application)
+@app.route("/update")
+def updateapp(text):
+    def sendupdate(s):
+        ev = ServerSentEvent(s)
+        yield ev.encode()
 
-httpd.serve_forever()
+    return Response(sendupdate(text), mimetype="text/event-stream")
+
+
+if __name__ == '__main__':
+    WSGIServer(('', 8051), app).serve_forever()
