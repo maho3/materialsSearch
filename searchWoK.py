@@ -40,19 +40,17 @@ def parsempdata(data, name, querystring, keystring):
             with open(cifpath, 'wb') as f:
                 f.write(result['cif'])
 
-            resultstring += '<tr class="results">'
+            resultstring += '<tr class="results" onclick="expandmp(this, \'' + result['full_formula'] + '\', \'' + result['spacegroup']['crystal_system'] + '\', \'' + result['spacegroup']['symbol'] + '; ' + str(result['spacegroup']['number']) + '; ' + result['spacegroup']['point_group'] + '; ' + result['spacegroup']['crystal_system'] + '; ' + str(result['spacegroup']['hall']) + '\')" onmouseover="this.style.background=\'#CCFFFF\'" onmouseout="this.style.background=\'white\'">'
             resultstring += '<td class="results">' + result['pretty_formula'] + '</td>'
             resultstring += '<td class="results">' + result['full_formula'] + '</td>'
-            resultstring += '<td class="results">' + str(result['total_magnetization']) + '</td>'
-            resultstring += '<td class="results">' + str(result['formation_energy_per_atom']) + '</td>'
-            resultstring += '<td class="results">' + str(result['e_above_hull']) + '</td>'
+            resultstring += '<td class="results">' + str(result['total_magnetization'])[:5] + '</td>'
+            resultstring += '<td class="results">' + str(result['formation_energy_per_atom'])[:5] + '</td>'
+            resultstring += '<td class="results">' + str(result['e_above_hull'])[:5] + '</td>'
             resultstring += '<td class="results">' + str(result['band_gap']) + '</td>'
             resultstring += '<td class="results">' + str(result['nsites']) + '</td>'
-            resultstring += '<td class="results">' + str(result['density']) + '</td>'
-            resultstring += '<td class="results">' + str(result['volume']) + '</td>'
-            resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '; ' + str(
-                result['spacegroup']['number']) + '; ' + result['spacegroup']['point_group'] + '; ' + \
-                            result['spacegroup']['crystal_system'] + '; ' + str(result['spacegroup']['hall']) + '</td>'
+            resultstring += '<td class="results">' + str(result['density'])[:5] + '</td>'
+            resultstring += '<td class="results">' + str(result['volume'])[:5] + '</td>'
+            resultstring += '<td class="results" id="' + result['full_formula'] + '" value="notselected">' + result['spacegroup']['crystal_system'] + '</td>'
             resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
                 'pretty_formula'] + '\')">Get CIF</button></td>'
             resultstring += '</tr>'
@@ -71,22 +69,32 @@ def parsewokkeys(keywords):
 def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
     resultstring = ''
     for i in range(len(wokdata)):
-        resultstring += '<tr>'
+        keystring = ''
+        resultstring += '<tr value="con" id="result' + str(i) + '_con" onclick="expandwok(\'con\', \'result' + str(i) + '\')">'
+
         resultstring += '<td class="results">' + wokdata[i][0]['pretty_formula'] + '</td>'
         resultstring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
+        keystring += '<td class="results">' + wokdata[i][0]['pretty_formula'] + '</td>'
+        keystring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
 
         for key in keydata[i].keys():
             numpapers = 0
-            for paper in keydata[i][key]:
+            keystring += '<td class="results">'
+            for m in range(len(keydata[i][key])):
+                paper = keydata[i][key][m]
                 if paper != 0:
                     numpapers += 1
+                    keystring+='<a href="' + wokdata[i][1][m]['DOIlink'] + '">(' + str(paper) + ')</a> '
 
             resultstring += '<td class="results">'
             if numpapers != 0:
                 resultstring += str(numpapers)
             resultstring += '</td>'
+            keystring+='</td>'
 
         resultstring += '</tr>'
+
+        resultstring += '<tr style="display:none" id="result' + str(i) + '_full" value="full" onclick="expandwok(\'full\', \'result' + str(i) + '\')">' + keystring + '</tr>'
 
     return json.dumps([parsewokkeys(keywords), resultstring, name, querystring, keystring])
 
@@ -119,6 +127,7 @@ def handlehtmlsearch_mp(querystring, keywordstring):
         if query in rlist['queries'].keys():
             mpresults.append(rlist['queries'][query])
         else:
+            print('test')
             result = searchWoKTools.pingmaterialsproject(query)
             rlist['queries'][query] = result
             mpresults.append(result)
@@ -161,7 +170,7 @@ def handlehtmlsearch_mp(querystring, keywordstring):
             if search in rlist['queries'].keys():
                 mpresults.append(rlist['queries'][search])
             else:
-                result = searchWoKTools.pingmaterialsproject(search, len(query))
+                result = searchWoKTools.pingmaterialsproject(search, 3)
                 rlist['queries'][search] = result
                 mpresults.append(result)
 

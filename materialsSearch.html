@@ -12,9 +12,11 @@
                 font-weight: normal}
 
     .results    {border: 1px solid black;
-                border-collapse:collapse}
+                border-collapse:collapse;
+                vertical-align: middle}
     .resultTitle{border: 1px solid black;
-                font-weight: bold}
+                font-weight: bold;
+                white-space: nowrap}
 
     .element     {border: 1px solid black;
                 width: 10px;
@@ -24,7 +26,7 @@
                 background:white}
     .noelement   {width: 10px;
                 height: 10px;}
-    .selected    {background: green;}
+    .selected    {background: green}
 
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -135,6 +137,30 @@
         $('#permsum').val(resString);
     }
 
+    function expandmp(element, formula, origin, text){
+
+        currenttext = $('#' + formula).html();
+
+        if ($('#' + formula).val() == 'notselected') {
+            $('#' + formula).html(origin);
+            $('#' + formula).val('selected');
+        } else {
+            $('#' + formula).html(text);
+            $('#' + formula).val('notselected');
+        }
+    }
+
+    function expandwok(change, id){
+        if (change == 'full') {
+            $('#' + id + '_con').show();
+            $('#' + id + '_full').hide();
+        } else {
+            $('#' + id + '_con').hide();
+            $('#' + id + '_full').show();
+        }
+    }
+
+
     if(typeof(EventSource) !== "undefined") {
         var source = new EventSource("/update");
         source.onmessage = function(event) {
@@ -144,10 +170,6 @@
         $('#serverstatus').append("Your browser does not support server side live updates" + "&#13;&#10;")
     }
 
-    var source = new EventSource("materialsSearch_Serv.py");
-    source.onmessage = function(event) {
-        $('#serverstatus').append(event.data + "<br>")
-    };
 
     $(document).ready(function() {
         $.get("/grabpresets", {set:'sulfides'}, function(data){
@@ -313,10 +335,11 @@
                 name:$('[name="searchname"]').val(),
                 searchlimit:$('[name="searchlimit"]').val(),
                 load:$('#prevLoad option:selected').text(),
-                searchtype:$(this).val()});
+                searchtype:$(this).val()},
 
-            posting.done(function(data){
+                function(data){
                 $('#serverstatus').append('Done!');
+                data = JSON.parse(data);
 
                 if (event.target.id == 'mpbutton'){
 

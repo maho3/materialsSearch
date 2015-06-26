@@ -7,7 +7,7 @@ from urlparse import urlparse
 from wordcloud import WordCloud, STOPWORDS
 
 
-def pingmaterialsproject(material, matlength):
+def pingmaterialsproject(material, matlength=0):
     print('Searching Materials Project for '+material+'...')
 
     key = '0cVziFePTUfsawW8'
@@ -19,7 +19,10 @@ def pingmaterialsproject(material, matlength):
         if r.status_code == 200:
             rdict = r.json()['response']
             for n in rdict:
-                if len(n['unit_cell_formula']) == matlength:
+                if matlength > 0:
+                    if len(n['unit_cell_formula']) == matlength:
+                        respdict.append(n)
+                else:
                     respdict.append(n)
 
     except requests.ConnectionError:
