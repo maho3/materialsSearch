@@ -111,6 +111,7 @@ def mainapp():
 
     elif searchtype == 'wok':
         if searchname == '':
+            q.put('Generating search name...')
             while True:
                 i += 1
                 if 'search' + str(i) + '_wok.txt' not in prevload:
@@ -118,6 +119,8 @@ def mainapp():
                     break
         else:
             searchname += '_wok.txt'
+
+        q.put('Search name is: ' + searchname)
 
         keys, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit))
 
@@ -165,7 +168,7 @@ def updateapp():
         try:
             while True:
                 s = q.get()
-                ev = ServerSentEvent(s)
+                ev = ServerSentEvent(s + '&#13;&#10;')
                 yield ev.encode()
         except GeneratorExit:
             pass

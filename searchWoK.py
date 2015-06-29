@@ -33,6 +33,7 @@ def readsearchcriteria(filename):
 
 def parsempdata(data, name, querystring, keystring):
     resultstring = ''
+    i=0
     for search in data:
         for result in search:
             cifpath = os.path.join(os.getcwd(), 'cifs', result['pretty_formula'] + '.cif')
@@ -40,20 +41,39 @@ def parsempdata(data, name, querystring, keystring):
             with open(cifpath, 'wb') as f:
                 f.write(result['cif'])
 
-            resultstring += '<tr class="results" onclick="expandmp(this, \'' + result['full_formula'] + '\', \'' + result['spacegroup']['crystal_system'] + '\', \'' + result['spacegroup']['symbol'] + '; ' + str(result['spacegroup']['number']) + '; ' + result['spacegroup']['point_group'] + '; ' + result['spacegroup']['crystal_system'] + '; ' + str(result['spacegroup']['hall']) + '\')" onmouseover="this.style.background=\'#CCFFFF\'" onmouseout="this.style.background=\'white\'">'
-            resultstring += '<td class="results">' + result['pretty_formula'] + '</td>'
+            resultstring += '<tr class="results" value="' + str(i) + '" id="mpresult' + str(i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+            resultstring += '<td class="results"><a href="https://www.materialsproject.org/materials/' + result['material_id'] + '/" target="_blank">' + result['pretty_formula'] + '</a></td>'
             resultstring += '<td class="results">' + result['full_formula'] + '</td>'
-            resultstring += '<td class="results">' + str(result['total_magnetization'])[:5] + '</td>'
-            resultstring += '<td class="results">' + str(result['formation_energy_per_atom'])[:5] + '</td>'
-            resultstring += '<td class="results">' + str(result['e_above_hull'])[:5] + '</td>'
+            resultstring += '<td class="results">' + str(result['total_magnetization'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['is_hubbard']) + '</td>'
+            resultstring += '<td class="results">' + str(result['formation_energy_per_atom'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['e_above_hull'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['band_gap']) + '</td>'
             resultstring += '<td class="results">' + str(result['nsites']) + '</td>'
-            resultstring += '<td class="results">' + str(result['density'])[:5] + '</td>'
-            resultstring += '<td class="results">' + str(result['volume'])[:5] + '</td>'
-            resultstring += '<td class="results" id="' + result['full_formula'] + '" value="notselected">' + result['spacegroup']['crystal_system'] + '</td>'
+            resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
+            resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '</td>'
             resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
                 'pretty_formula'] + '\')">Get CIF</button></td>'
             resultstring += '</tr>'
+
+            resultstring += '<tr class="results selected" value="' + str(i) + '" style="display:none" value="full" id="mpresult' + str(i) + '_full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+            resultstring += '<td class="results"><a href="https://www.materialsproject.org/materials/' + result['material_id'] + '/" target="_blank">' + result['pretty_formula'] + '</a></td>'
+            resultstring += '<td class="results">' + result['full_formula'] + '</td>'
+            resultstring += '<td class="results">' + str(result['total_magnetization'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['is_hubbard']) + '</td>'
+            resultstring += '<td class="results">' + str(result['formation_energy_per_atom'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['e_above_hull'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['band_gap']) + '</td>'
+            resultstring += '<td class="results">' + str(result['nsites']) + '</td>'
+            resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
+            resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
+            resultstring += '<td class="results">Sym: ' + result['spacegroup']['symbol'] + '<br> Num:  ' + str(result['spacegroup']['number']) + '<br>PG: ' + result['spacegroup']['point_group'] + '<br>Sys: ' + result['spacegroup']['crystal_system'] + '<br>Hall: ' + str(result['spacegroup']['hall']) + '</td>'
+            resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
+                'pretty_formula'] + '\')">Get CIF</button></td>'
+            resultstring += '</tr>'
+
+            i+=1
     return json.dumps([resultstring, name, querystring, keystring])
 
 
@@ -69,32 +89,33 @@ def parsewokkeys(keywords):
 def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
     resultstring = ''
     for i in range(len(wokdata)):
-        keystring = ''
-        resultstring += '<tr value="con" id="result' + str(i) + '_con" onclick="expandwok(\'con\', \'result' + str(i) + '\')">'
+        hidestring = ''
+        resultstring += '<tr value="' + str(i) + '" class="results" id="wokresult' + str(i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
 
-        resultstring += '<td class="results">' + wokdata[i][0]['pretty_formula'] + '</td>'
+        resultstring += '<td class="results"><a href="' + wokdata[i][0]['searchURL'] + '" target="_blank">' + wokdata[i][0]['pretty_formula'] + '</a></td>'
         resultstring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
-        keystring += '<td class="results">' + wokdata[i][0]['pretty_formula'] + '</td>'
-        keystring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
+        hidestring += '<td class="results"><a href="' + wokdata[i][0]['searchURL'] + '" target="_blank">' + wokdata[i][0]['pretty_formula'] + '</a></td>'
+        hidestring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
 
         for key in keydata[i].keys():
             numpapers = 0
-            keystring += '<td class="results">'
+            hidestring += '<td class="results">'
             for m in range(len(keydata[i][key])):
                 paper = keydata[i][key][m]
                 if paper != 0:
                     numpapers += 1
-                    keystring+='<a href="' + wokdata[i][1][m]['DOIlink'] + '">(' + str(paper) + ')</a> '
+                    hidestring+='<a href="' + wokdata[i][1][m]['DOIlink'] + '" target="_blank">(' + str(paper) + ')</a> '
 
             resultstring += '<td class="results">'
             if numpapers != 0:
                 resultstring += str(numpapers)
             resultstring += '</td>'
-            keystring+='</td>'
+            hidestring+='</td>'
 
         resultstring += '</tr>'
 
-        resultstring += '<tr style="display:none" id="result' + str(i) + '_full" value="full" onclick="expandwok(\'full\', \'result' + str(i) + '\')">' + keystring + '</tr>'
+        resultstring += '<tr value="' + str(i) + '" class="results selected" style="display:none" id="wokresult' + str(i) + '_full" value="full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+        resultstring += hidestring + '</tr>'
 
     return json.dumps([parsewokkeys(keywords), resultstring, name, querystring, keystring])
 

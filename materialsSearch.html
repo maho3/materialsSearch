@@ -26,7 +26,9 @@
                 background:white}
     .noelement   {width: 10px;
                 height: 10px;}
-    .selected    {background: green}
+    .highlight    {background-color: #CCFFFF}
+    .selected    {background-color: #CCFFCC}
+    .highlightselected    {background-color: #99FFCC}
 
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -137,27 +139,39 @@
         $('#permsum').val(resString);
     }
 
-    function expandmp(element, formula, origin, text){
-
-        currenttext = $('#' + formula).html();
-
-        if ($('#' + formula).val() == 'notselected') {
-            $('#' + formula).html(origin);
-            $('#' + formula).val('selected');
+    function expand(change, id){
+        if (change == 'full') {
+            console.log(id);
+            $('#mp' + id + '_con').show();
+            $('#wok' + id + '_con').show();
+            $('#mp' + id + '_full').hide();
+            $('#wok' + id + '_full').hide();
         } else {
-            $('#' + formula).html(text);
-            $('#' + formula).val('notselected');
+            $('#mp' + id + '_con').hide();
+            $('#wok' + id + '_con').hide();
+            $('#mp' + id + '_full').show();
+            $('#wok' + id + '_full').show();
         }
     }
 
-    function expandwok(change, id){
-        if (change == 'full') {
-            $('#' + id + '_con').show();
-            $('#' + id + '_full').hide();
-        } else {
-            $('#' + id + '_con').hide();
-            $('#' + id + '_full').show();
-        }
+    function hoveron(id){
+        $('#wok' + id + '_con').addClass('highlight');
+        $('#mp' + id + '_con').addClass('highlight');
+
+        $('#mp' + id + '_full').removeClass('selected');
+        $('#wok' + id + '_full').removeClass('selected');
+        $('#mp' + id + '_full').addClass('highlightselected');
+        $('#wok' + id + '_full').addClass('highlightselected');
+
+    }
+    function hoveroff(id){
+        $('#wok' + id + '_con').removeClass('highlight');
+        $('#mp' + id + '_con').removeClass('highlight');
+
+        $('#mp' + id + '_full').removeClass('highlightselected');
+        $('#wok' + id + '_full').removeClass('highlightselected');
+        $('#mp' + id + '_full').addClass('selected');
+        $('#wok' + id + '_full').addClass('selected');
     }
 
 
@@ -338,41 +352,42 @@
                 searchtype:$(this).val()},
 
                 function(data){
-                $('#serverstatus').append('Done!');
-                data = JSON.parse(data);
+                    $('#serverstatus').append('Done!' + '&#13;&#10;');
+                    data = JSON.parse(data);
 
-                if (event.target.id == 'mpbutton'){
+                    if (event.target.id == 'mpbutton'){
 
-                    $('[name="queries"]').val(data[2])
-                    $('[name="keywords"]').val(data[3])
-                    $("#mpresults > tbody").empty().append(data[0]);
-                    $("#prevLoad").append($('<option>', {value: data[1]}).text(data[1]));
-
-                } else if (event.target.id == 'wokbutton') {
-
-                    $('[name="queries"]').val(data[3])
-                    $('[name="keywords"]').val(data[4])
-                    $("#wokresults > thead > tr").empty().append(data[0]);
-                    $("#wokresults > tbody").empty().append(data[1]);
-                    $("#prevLoad").append($('<option>', {value: data[2]}).text(data[2]));
-
-                } else if (event.target.id == 'csvbutton') {
-                    $('#response').empty().append("Done! CSV-WC's generated. Check " + data[0]);
-
-                } else if (event.target.id == 'loadbutton') {
-                    var loadfile = $('#prevLoad option:selected').text()
-
-                    $('[name="queries"]').val(data[3])
-                    $('[name="keywords"]').val(data[4])
-                    if (loadfile.substr(-7) == '_mp.txt'){
+                        $('[name="queries"]').val(data[2])
+                        $('[name="keywords"]').val(data[3])
                         $("#mpresults > tbody").empty().append(data[0]);
-                    } else if (loadfile.substr(-8) == '_wok.txt'){
+                        $("#prevLoad").append($('<option>', {value: data[1]}).text(data[1]));
+
+                    } else if (event.target.id == 'wokbutton') {
+
+                        $('[name="queries"]').val(data[3])
+                        $('[name="keywords"]').val(data[4])
                         $("#wokresults > thead > tr").empty().append(data[0]);
                         $("#wokresults > tbody").empty().append(data[1]);
+                        $("#prevLoad").append($('<option>', {value: data[2]}).text(data[2]));
+
+                    } else if (event.target.id == 'csvbutton') {
+                        $('#response').empty().append("Done! CSV-WC's generated. Check " + data[0]);
+
+                    } else if (event.target.id == 'loadbutton') {
+                        var loadfile = $('#prevLoad option:selected').text()
+
+                        $('[name="queries"]').val(data[2])
+                        $('[name="keywords"]').val(data[3])
+                        if (loadfile.substr(-7) == '_mp.txt'){
+                            $("#mpresults > tbody").empty().append(data[0]);
+                        } else if (loadfile.substr(-8) == '_wok.txt'){
+                            $("#wokresults > thead > tr").empty().append(data[0]);
+                            $("#wokresults > tbody").empty().append(data[1]);
+                        }
                     }
-                }
             });
         });
+
     });
 </script>
 </head>
@@ -504,7 +519,7 @@
     <table class="results" id="mpresults" style="width:100%; display:none">
         <thead>
         <tr class="results">
-            <td class="resultTitle">Formula</td><td class="resultTitle">Full Formula</td><td class="resultTitle">Total Magnetization</td>
+            <td class="resultTitle">Formula</td><td class="resultTitle">Full Formula</td><td class="resultTitle">Total Magnetization</td><td class="resultTitle">Is Hubbard</td>
             <td class="resultTitle">Formation Energy (eV)</td><td class="resultTitle">E Above Hull (eV)</td><td class="resultTitle">Band Gap (eV)</td>
             <td class="resultTitle">Nsites</td><td class="resultTitle">Density (gm/cc)</td><td class="resultTitle">Volume</td><td class="resultTitle">Spacegroup</td><td class="resultTitle">CIF</td>
         </tr>
