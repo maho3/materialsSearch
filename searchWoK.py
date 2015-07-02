@@ -53,8 +53,8 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
             resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '</td>'
-            resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
-                'pretty_formula'] + '\')">Get CIF</button></td>'
+            resultstring += '<td class="results"><a href="/getcif?cif=' + result['pretty_formula'] + '" target="_blank">CIF</a></td>'
+            resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + result['material_id'] + '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
             resultstring += '</tr>'
 
             resultstring += '<tr class="results selected" value="' + str(i) + '" style="display:none" value="full" id="mpresult' + str(i) + '_full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
@@ -69,8 +69,8 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
             resultstring += '<td class="results">Sym: ' + result['spacegroup']['symbol'] + '<br> Num:  ' + str(result['spacegroup']['number']) + '<br>PG: ' + result['spacegroup']['point_group'] + '<br>Sys: ' + result['spacegroup']['crystal_system'] + '<br>Hall: ' + str(result['spacegroup']['hall']) + '</td>'
-            resultstring += '<td class="results"><button onclick="window.open(\'/?cif=' + result[
-                'pretty_formula'] + '\')">Get CIF</button></td>'
+            resultstring += '<td class="results"><a href="/getcif?cif=' + result['pretty_formula'] + '" target="_blank">CIF</a></td>'
+            resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + result['material_id'] + '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
             resultstring += '</tr>'
 
             i+=1

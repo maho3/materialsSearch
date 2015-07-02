@@ -17,6 +17,11 @@
     .resultTitle{border: 1px solid black;
                 font-weight: bold;
                 white-space: nowrap}
+    .mpresultTitle{border: 1px solid black;
+                font-weight: bold;
+                white-space: nowrap;
+                cursor:pointer;
+                cursor:hand;}
 
     .element     {border: 1px solid black;
                 width: 10px;
@@ -26,370 +31,20 @@
                 background:white}
     .noelement   {width: 10px;
                 height: 10px;}
+
     .highlight    {background-color: #CCFFFF}
     .selected    {background-color: #CCFFCC}
     .highlightselected    {background-color: #99FFCC}
 
 </style>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <script>
-    function addQuerySet(set){
-        var queries = document.getElementById("queries");
-        if (set.checked){
-            switch(set.value){
-                case "sulfides":
-                    str=''
-                    for (var i=0; i<sulfides.length;i++){
-                        str += sulfides[i]+'; ';
-                    } queries.value += str;
-                    break;
-                case "selenides":
-                    str=''
-                    for (var i=0; i<selenides.length;i++){
-                        str += selenides[i]+'; ';
-                    } queries.value += str;
-                    break;
-                case "twoMetals":
-                    str=''
-                    for (var i=0; i<twoMetals.length;i++){
-                        str += twoMetals[i]+'; ';
-                    } queries.value += str;
-                    break;
-                case "oxides":
-                    str=''
-                    for (var i=0; i<oxides.length;i++){
-                        str += oxides[i]+'; ';
-                    } queries.value += str;
-                    break;
-                case "vanadates":
-                    str=''
-                    for (var i=0; i<vanadates.length;i++){
-                        str += vanadates[i]+'; ';
-                    } queries.value += str;
-                    break;
-            }
-        } else {
-            switch(set.value){
-                case "sulfides":
-                    for (var i=0; i<sulfides.length; i++){
-                        queries.value = queries.value.replace(sulfides[i]+'; ',"");
-                    }break;
-                case "selenides":
-                    for (var i=0; i<selenides.length; i++){
-                        queries.value = queries.value.replace(selenides[i]+'; ',"");
-                    }break;
-                case "twoMetals":
-                    for (var i=0; i<twoMetals.length; i++){
-                        queries.value = queries.value.replace(twoMetals[i]+'; ',"");
-                    }break;
-                case "oxides":
-                    for (var i=0; i<oxides.length; i++){
-                        queries.value = queries.value.replace(oxides[i]+'; ',"");
-                    }break;
-                case "vanadates":
-                    for (var i=0; i<vanadates.length; i++){
-                        queries.value = queries.value.replace(vanadates[i]+'; ',"");
-                    }break;
-            }
-
-        }
-    }
-
-    function resetKeyDefault(){
-        document.getElementById("keywords").value=''
-        for (var i = 0; i<keywords.length; i++) {
-            document.getElementById("keywords").value += keywords[i] + '; ';
-        }
-    }
-
-    function sumPerm(){
-        var atext = $('#permtextA').val().split(", ");
-        var btext = $('#permtextB').val().split(", ");
-        var ctext = $('#permtextC').val().split(", ");
-        var dtext = $('#permtextD').val().split(", ");
-
-        atext = $.grep(atext, function(a) {
-            return a != '';
-        });
-        btext = $.grep(btext, function(a) {
-            return a != '';
-        });
-        ctext = $.grep(ctext, function(a) {
-            return a != '';
-        });
-        dtext = $.grep(dtext, function(a) {
-            return a != '';
-        });
-
-        var resString = ''
-
-        if (atext.length != 0) {
-            resString += '[' + atext.join() + ']';
-        }
-        if (btext.length != 0) {
-            resString += '[' + btext.join() + ']';
-        }
-        if (ctext.length != 0) {
-            resString += '[' + ctext.join() + ']';
-        }
-        if (dtext.length != 0) {
-            resString += '[' + dtext.join() + ']';
-        }
-
-        $('#permsum').val(resString);
-    }
-
-    function expand(change, id){
-        if (change == 'full') {
-            console.log(id);
-            $('#mp' + id + '_con').show();
-            $('#wok' + id + '_con').show();
-            $('#mp' + id + '_full').hide();
-            $('#wok' + id + '_full').hide();
-        } else {
-            $('#mp' + id + '_con').hide();
-            $('#wok' + id + '_con').hide();
-            $('#mp' + id + '_full').show();
-            $('#wok' + id + '_full').show();
-        }
-    }
-
-    function hoveron(id){
-        $('#wok' + id + '_con').addClass('highlight');
-        $('#mp' + id + '_con').addClass('highlight');
-
-        $('#mp' + id + '_full').removeClass('selected');
-        $('#wok' + id + '_full').removeClass('selected');
-        $('#mp' + id + '_full').addClass('highlightselected');
-        $('#wok' + id + '_full').addClass('highlightselected');
-
-    }
-    function hoveroff(id){
-        $('#wok' + id + '_con').removeClass('highlight');
-        $('#mp' + id + '_con').removeClass('highlight');
-
-        $('#mp' + id + '_full').removeClass('highlightselected');
-        $('#wok' + id + '_full').removeClass('highlightselected');
-        $('#mp' + id + '_full').addClass('selected');
-        $('#wok' + id + '_full').addClass('selected');
-    }
-
-
-    if(typeof(EventSource) !== "undefined") {
-        var source = new EventSource("/update");
-        source.onmessage = function(event) {
-            $('#serverstatus').append(event.data + "&#13;&#10;")
-        };
-    } else {
-        $('#serverstatus').append("Your browser does not support server side live updates" + "&#13;&#10;")
-    }
-
-
-    $(document).ready(function() {
-        $.get("/grabpresets", {set:'sulfides'}, function(data){
-            sulfides=data.split("', '");
-        });
-        $.get("/grabpresets", {set:'selenides'}, function(data){
-            selenides=data.split("', '");
-        });
-        $.get("/grabpresets", {set:'twoMetals'}, function(data){
-            twoMetals=data.split("', '");
-        });
-        $.get("/grabpresets", {set:'oxides'}, function(data){
-            oxides=data.split("', '");
-        });
-        $.get("/grabpresets", {set:'vanadates'}, function(data){
-            vanadates=data.split("', '");
-        });
-        $.get("/grabpresets", {set:'keywords'}, function(data){
-            keywords=data.split("', '");
-        });
-
-        $('#showmp').click(function(){
-            if ($(this).text()=='Display MP Results'){
-                $(this).text('Hide MP Results');
-            } else {
-                $(this).text('Display MP Results');
-            };
-            $('#mpresults').toggle(500)
-        });
-
-        $('.element').click(function(){
-            var set = $("input[name=permset]:checked").val();
-
-            switch(set) {
-                case "A":
-                    if ($("#permtextA").val().includes($(this).text())){
-                        var s = $("#permtextA").val();
-                        s = s.replace($(this).text() + ', ','');
-                        s = s.replace($(this).text());
-                        $("#permtextA").val(s);
-                        $(this).css('background', 'white');
-                    } else {
-                        $(this).css('background', '#3366FF');
-                        $("#permtextA").val($("#permtextA").val() + $(this).text() + ', ');
-                    }
-                    break;
-                case "B":
-                    if ($("#permtextB").val().includes($(this).text())){
-                        var s = $("#permtextB").val();
-                        s = s.replace($(this).text() + ', ','');
-                        s = s.replace($(this).text());
-                        $("#permtextB").val(s);
-                        $(this).css('background', 'white');
-                    } else {
-                        $(this).css('background', '#FF5050');
-                        $("#permtextB").val($("#permtextB").val() + $(this).text() + ', ');
-                    }
-                    break;
-                case "C":
-                    if ($("#permtextC").val().includes($(this).text())){
-                        var s = $("#permtextC").val();
-                        s = s.replace($(this).text() + ', ','');
-                        s = s.replace($(this).text());
-                        $("#permtextC").val(s);
-                        $(this).css('background', 'white');
-                    } else {
-                        $(this).css('background', '#33CC33');
-                        $("#permtextC").val($("#permtextC").val() + $(this).text() + ', ');
-                    }
-                    break;
-                case "D":
-                    if ($("#permtextD").val().includes($(this).text())){
-                        var s = $("#permtextD").val();
-                        s = s.replace($(this).text() + ', ','');
-                        s = s.replace($(this).text());
-                        $("#permtextD").val(s);
-                        $(this).css('background', 'white');
-                    } else {
-                        $(this).css('background', '#FF00FF');
-                        $("#permtextD").val($("#permtextD").val() + $(this).text() + ', ');
-                    }
-                    break;
-            }
-
-            sumPerm();
-        });
-
-        $('#permtextA, #permtextB, #permtextC, #permtextD').on('input', sumPerm());
-
-        $("input[name=permset]").change(function(){
-            var set = $("input[name=permset]:checked").val()
-
-            var acolor = '#99CCFF', bcolor = '#FF9999', ccolor = '#99FF99', dcolor = '#FF99FF';
-
-            switch(set) {
-                case "A":
-                    acolor = '#3366FF';
-                    break;
-                case "B":
-                    bcolor = '#FF5050';
-                    break;
-                case "C":
-                    ccolor = '#33CC33';
-                    break;
-                case "D":
-                    dcolor = '#FF00FF';
-                    break;
-            }
-
-            $(".element").each(function(){
-                switch($(this).css('background-color')) {
-                    case "rgb(51, 102, 255)":
-                    case "rgb(153, 204, 255)":
-                        $(this).css('background',acolor);
-                        break;
-                    case "rgb(255, 80, 80)":
-                    case "rgb(255, 153, 153)":
-                        $(this).css('background',bcolor);
-                        break;
-                    case "rgb(51, 204, 51)":
-                    case "rgb(153, 255, 153)":
-                        $(this).css('background',ccolor);
-                        break;
-                    case "rgb(255, 0, 255)":
-                    case "rgb(255, 153, 255)":
-                        $(this).css('background',dcolor);
-                        break;
-                }
-            });
-        });
-
-        $('#addperm').click(function(){
-            $('#queries').val($('#queries').val() + $('#permsum').val() + '; ');
-            $("#permtextA").val('');
-            $("#permtextB").val('');
-            $("#permtextC").val('');
-            $("#permtextD").val('');
-            $("#permsum").val('');
-            $(".element").each(function(){
-                $(this).css('background', 'white');
-            });
-        });
-
-        $('#showwok').click(function(){
-            if ($(this).text()=='Display WoK Results'){
-                $(this).text('Hide WoK Results');
-            } else {
-                $(this).text('Display WoK Results');
-            };
-            $('#wokresults').toggle(500)
-        });
-
-        $('#mpbutton, #wokbutton, #csvbutton, #loadbutton').click(function(event) {
-            $('#serverstatus').empty().append('Generating results... Please wait...' + "&#13;&#10;");
-
-            url = $('#ajaxform').attr( "action" );
-
-            event.preventDefault();
-
-            var posting = $.post(url,{
-                queries:$('[name="queries"]').val(),
-                keywords:$('[name="keywords"]').val(),
-                name:$('[name="searchname"]').val(),
-                searchlimit:$('[name="searchlimit"]').val(),
-                load:$('#prevLoad option:selected').text(),
-                searchtype:$(this).val()},
-
-                function(data){
-                    $('#serverstatus').append('Done!' + '&#13;&#10;');
-                    data = JSON.parse(data);
-
-                    if (event.target.id == 'mpbutton'){
-
-                        $('[name="queries"]').val(data[2])
-                        $('[name="keywords"]').val(data[3])
-                        $("#mpresults > tbody").empty().append(data[0]);
-                        $("#prevLoad").append($('<option>', {value: data[1]}).text(data[1]));
-
-                    } else if (event.target.id == 'wokbutton') {
-
-                        $('[name="queries"]').val(data[3])
-                        $('[name="keywords"]').val(data[4])
-                        $("#wokresults > thead > tr").empty().append(data[0]);
-                        $("#wokresults > tbody").empty().append(data[1]);
-                        $("#prevLoad").append($('<option>', {value: data[2]}).text(data[2]));
-
-                    } else if (event.target.id == 'csvbutton') {
-                        $('#response').empty().append("Done! CSV-WC's generated. Check " + data[0]);
-
-                    } else if (event.target.id == 'loadbutton') {
-                        var loadfile = $('#prevLoad option:selected').text()
-
-                        $('[name="queries"]').val(data[2])
-                        $('[name="keywords"]').val(data[3])
-                        if (loadfile.substr(-7) == '_mp.txt'){
-                            $("#mpresults > tbody").empty().append(data[0]);
-                        } else if (loadfile.substr(-8) == '_wok.txt'){
-                            $("#wokresults > thead > tr").empty().append(data[0]);
-                            $("#wokresults > tbody").empty().append(data[1]);
-                        }
-                    }
-            });
-        });
-
-    });
+    [JQUERY]
 </script>
+<script>
+    [MSJS]
+</script>
+
+    <title>Materials Search</title>
 </head>
 
 <body>
@@ -495,7 +150,7 @@
         <tr style="height:25px">
             <td colspan="4" style="text-align:left">Load a previous search:
                 <select id="prevLoad">
-                    [PRELOAD]
+                    [PREVLOAD]
                 </select>
                 <button type="submit" id="loadbutton" value="load">Load</button>
             </td>
@@ -516,12 +171,23 @@
     <h2>Results:</h2>
     <textarea id="serverstatus" rows="10" cols="60" placeholder="SERVER UPDATES HERE" readonly></textarea><br><br>
     <button id="showmp">Display MP Results</button><button id="showwok">Display WoK Results</button><br><br>
+    MP: <span id="mptitle"></span><br>
     <table class="results" id="mpresults" style="width:100%; display:none">
         <thead>
         <tr class="results">
-            <td class="resultTitle">Formula</td><td class="resultTitle">Full Formula</td><td class="resultTitle">Total Magnetization</td><td class="resultTitle">Is Hubbard</td>
-            <td class="resultTitle">Formation Energy (eV)</td><td class="resultTitle">E Above Hull (eV)</td><td class="resultTitle">Band Gap (eV)</td>
-            <td class="resultTitle">Nsites</td><td class="resultTitle">Density (gm/cc)</td><td class="resultTitle">Volume</td><td class="resultTitle">Spacegroup</td><td class="resultTitle">CIF</td>
+            <td class="resultTitle">Formula</td>
+            <td class="mpresultTitle" onclick="sortby('fform','mp',this)">Full Formula</td>
+            <td class="mpresultTitle" onclick="sortby('mag','mp',this)">Total Magnetization</td>
+            <td class="resultTitle">Is Hubbard</td>
+            <td class="mpresultTitle" onclick="sortby('forme','mp',this)">Formation Energy (eV)</td>
+            <td class="mpresultTitle" onclick="sortby('ehull','mp',this)">E Above Hull (eV)</td>
+            <td class="mpresultTitle" onclick="sortby('gap','mp',this)">Band Gap (eV)</td>
+            <td class="mpresultTitle" onclick="sortby('nsites','mp',this)">Nsites</td>
+            <td class="mpresultTitle" onclick="sortby('den','mp',this)">Density (gm/cc)</td>
+            <td class="mpresultTitle" onclick="sortby('vol','mp',this)">Volume</td>
+            <td class="mpresultTitle" onclick="sortby('sg','mp',this)">Spacegroup</td>
+            <td class="resultTitle">CIF</td>
+            <td class="resultTitle">Model</td>
         </tr>
         </thead>
         <tbody>
@@ -529,11 +195,10 @@
         </tbody>
     </table>
     <br><br>
+    WoK: <span id="woktitle"></span><br>
     <table class="results" id="wokresults" style="display:none">
         <thead>
-        <tr class="results">
-
-        </tr>
+        <tr class="results" id="wokcols"></tr>
         </thead>
         <tbody>
 
