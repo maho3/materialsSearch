@@ -146,7 +146,7 @@ def mainapp():
             else:
                 sorthead = 'wok'
 
-            response_body = [searchWoK.parsempdata([sortedlist], '', sortdata[1], sortdata[2]),'']
+            response_body = [searchWoK.parsempdata([sortedlist], '', sortdata[1], sortdata[2]),dumps(['','','','',''])]
 
             if partname != '':
                 with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', partname), 'rb') as f:
