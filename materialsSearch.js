@@ -1,4 +1,10 @@
 
+if (!String.prototype.includes) {
+    String.prototype.includes = function()  {'use strict':
+        return String.prototype.indexOf.apply(this, arguments) !== -1;
+    };
+}
+
 function addQuerySet(set){
     var queries = document.getElementById("queries");
     if (set.checked){

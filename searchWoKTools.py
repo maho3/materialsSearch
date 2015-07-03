@@ -4,8 +4,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from urlparse import urlparse
-from wordcloud import WordCloud, STOPWORDS
-
+try:
+    from wordcloud import WordCloud, STOPWORDS
+except ImportError:
+    pass
 
 def pingmaterialsproject(material, matlength=0):
     print('Searching Materials Project for '+material+'...')

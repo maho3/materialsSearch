@@ -6,11 +6,15 @@ from gevent.pywsgi import WSGIServer
 from gevent.queue import Queue
 from flask import Flask, Response, request, Response
 from cgi import escape
-from urlparse import parse_qs
 import searchWoK
 import searchWoKTools
 import os
 from json import dump, dumps, load
+
+try:
+    from urlparse import parse_qs
+except ImportError:
+    from urllib.parse import parse_qs
 
 class ServerSentEvent(object):
 
@@ -37,6 +41,12 @@ q = Queue()
 
 @app.route("/")
 def returnhtml():
+    try:
+        os.makedirs('materialsSearchLoadFiles')
+    except OSError:
+        if not os.path.isdir('materialsSearchLoadFiles'):
+            raise
+
     prevload = os.listdir(os.path.join(os.getcwd(), 'materialsSearchLoadFiles'))
 
     with open('materialsSearch.html', 'r') as f:
@@ -226,8 +236,7 @@ def mainapp():
                             searchname = 'search' + str(i)
                             break
 
-                if not os.path.exists(os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)):
-                    os.makedirs(os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname))
+
 
                 response_body = searchWoK.handlehtmlsearch_csv(queries, keywords, int(searchlimit), searchname)
 

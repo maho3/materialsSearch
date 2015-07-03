@@ -5,6 +5,12 @@ import json
 import os
 import searchWoKTools
 
+try:
+    import wordcloud
+    wcexists = True
+except ImportError:
+    wcexists = False
+
 mainKeywords = ['superconduct', 'conduct', 'resist', 'metal', 'insulator', 'doped', 'ferromagnetism',
                 'antiferromagnetism', 'ferrimagnetism', 'magnet', '\d K', 'DFT', 'DMFT',
                 'charge density wave', 'band structure', 'susceptibility', 'NMR',
@@ -241,6 +247,10 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
     fulltitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Full.csv')
     contitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Condensed.csv')
 
+    if wcexists:
+        if not os.path.exists(os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname)):
+            os.makedirs(os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname))
+
     with open(fulltitle, 'wb') as csvFull, open(contitle, 'wb') as csvCon:
         fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -257,10 +267,11 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
         for i in range(len(wokresults)):
             searchdata = wokresults[i]
 
-            wc = searchWoKTools.generateabstractwc(searchdata)
-            imgpath = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname,
-                                   searchdata[0]['pretty_formula'] + '.png')
-            wc.to_file(imgpath)
+            if wcexists:
+                wc = searchWoKTools.generateabstractwc(searchdata)
+                imgpath = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname,
+                                       searchdata[0]['pretty_formula'] + '.png')
+                wc.to_file(imgpath)
 
             fwriter.writerow([searchdata[0]['pretty_formula'],
                               str(searchdata[0]['numResults']) + ' publications',
