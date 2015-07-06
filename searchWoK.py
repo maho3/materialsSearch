@@ -1,9 +1,13 @@
+
+from __future__ import print_function
+
 __author__ = 'eager55'
 
 import csv
 import json
 import os
 import searchWoKTools
+import itertools
 
 try:
     import wordcloud
@@ -190,7 +194,7 @@ def handlehtmlsearch_mp(querystring, keywordstring):
             lenperms = divlen
             repeat *= len(permlist[n])
 
-        print queryarray
+        print(queryarray)
         for query in queryarray:
             search = '-'.join(query)
 
@@ -220,17 +224,26 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     wokresults = []
     for search in mpsearch:
         for n in search:
+            iterinput=[]
+            for m in n['unit_cell_formula'].keys():
+                iterinput.append(m + str(int(n['unit_cell_formula'][m])))
+
+            iterlist = list(itertools.permutations(iterinput))
+
             searchparam = 'topic:' + n['pretty_formula'] + ' or topic:' + n['full_formula']
 
-            if searchparam in wlist.keys():
-                wokresults.append(wlist[searchparam])
+            for term in iterlist:
+                searchparam += ' or topic:' + ''.join(term)
+
+            if n['material_id'] in wlist.keys():
+                wokresults.append(wlist[n['material_id']])
             else:
                 try:
                     searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
                 except Exception:
                     searchdata = ({}, [])
                 searchdata[0].update(n)
-                wlist[searchparam] = searchdata
+                wlist[n['material_id']] = searchdata
                 wokresults.append(searchdata)
 
     with open('wokRecord.json', 'wb') as record:

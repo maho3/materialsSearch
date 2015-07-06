@@ -89,7 +89,6 @@ def getcif():
 
 @app.route("/submit", methods=['POST'])
 def mainapp():
-    print ('hello')
 
     prevload = os.listdir(os.path.join(os.getcwd(), 'materialsSearchLoadFiles'))
 
