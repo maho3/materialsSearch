@@ -182,6 +182,7 @@ def mainapp():
         queries = escape(d['queries'])
         keywords = escape(d['keywords'])
         searchname = escape(d['name'])
+        usecache = bool(escape(d['usecache'])=='true')
 
         if searchtype == 'mp':
             if searchname == '':
@@ -196,7 +197,7 @@ def mainapp():
 
             q.put('Search name is: ' + searchname)
 
-            mpsearch, keys = searchWoK.handlehtmlsearch_mp(queries, keywords)
+            mpsearch, keys = searchWoK.handlehtmlsearch_mp(queries, keywords, usecache)
 
             with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname), 'wb') as outfile:
                 dump([mpsearch, queries, keywords], outfile)
@@ -219,7 +220,7 @@ def mainapp():
 
                 q.put('Search name is: ' + searchname)
 
-                keys, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit))
+                keys, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit), usecache)
 
                 with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname), 'wb') as outfile:
                     dump([keys, wokdata, keydata, queries, keywords], outfile)
@@ -237,7 +238,7 @@ def mainapp():
 
 
 
-                response_body = searchWoK.handlehtmlsearch_csv(queries, keywords, int(searchlimit), searchname)
+                response_body = searchWoK.handlehtmlsearch_csv(queries, keywords, int(searchlimit), searchname, usecache)
 
 
     response = Response()

@@ -377,7 +377,8 @@ $(document).ready(function() {
             name:$('[name="searchname"]').val(),
             searchlimit:$('[name="searchlimit"]').val(),
             load:$('#prevLoad option:selected').text(),
-            searchtype:$(this).val()},
+            searchtype:$(this).val(),
+            usecache:$('#usecache').prop('checked')},
 
             function(data){
                 $('#serverstatus').append('Done!' + '&#13;&#10;');

@@ -98,6 +98,7 @@ def parsewokkeys(keywords):
 
 def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
     resultstring = ''
+
     for i in range(len(wokdata)):
         hidestring = ''
         resultstring += '<tr value="' + str(i) + '" class="results" id="wokresult' + str(i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
@@ -139,7 +140,7 @@ def parseprevload(prevload):
     return resultstring
 
 
-def handlehtmlsearch_mp(querystring, keywordstring):
+def handlehtmlsearch_mp(querystring, keywordstring, cache):
     queries, permqueries, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
 
     with open('mpRecord.json', 'rb') as record:
@@ -154,12 +155,14 @@ def handlehtmlsearch_mp(querystring, keywordstring):
 
     mpresults = []
 
-    for query in queries:
-        if query in rlist['queries'].keys():
+    for i in range(len(queries)):
+        query = queries[i]
+        if query in rlist['queries'].keys() and cache:
+            print('loading mp for ' + query + ' (' + str(i+1) + '/' + str(len(queries)) + ')')
             mpresults.append(rlist['queries'][query])
         else:
-            print('test')
-            result = searchWoKTools.pingmaterialsproject(query)
+            print('searching mp for ' + query + ' (' + str(i+1) + '/' + str(len(queries)) + ')')
+            result = searchWoKTools.getmaterialsproject(query)
             rlist['queries'][query] = result
             mpresults.append(result)
 
@@ -199,9 +202,11 @@ def handlehtmlsearch_mp(querystring, keywordstring):
             search = '-'.join(query)
 
             if search in rlist['queries'].keys():
+                print('loading mp for ' + search)
                 mpresults.append(rlist['queries'][search])
             else:
-                result = searchWoKTools.pingmaterialsproject(search, 3)
+                print('searching mp for ' + search)
+                result = searchWoKTools.getmaterialsproject(search, 3)
                 rlist['queries'][search] = result
                 mpresults.append(result)
 
@@ -211,17 +216,22 @@ def handlehtmlsearch_mp(querystring, keywordstring):
     return mpresults, keywords
 
 
-def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
-    mpsearch, keywords = handlehtmlsearch_mp(querystring, keywordstring)
+def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache):
+    mpsearch, keywords = handlehtmlsearch_mp(querystring, keywordstring, cache)
 
     with open('wokRecord.json', 'rb') as record:
-        rec = record.read()
         try:
-            wlist = json.loads(rec)
+            wlist = json.load(record)
         except ValueError:
-            wlist = {}
+            wlist={}
+
+    searchtotal=0
+    for search in mpsearch:
+        searchtotal += len(search)
 
     wokresults = []
+    i=0
+
     for search in mpsearch:
         for n in search:
             iterinput=[]
@@ -235,13 +245,19 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
             for term in iterlist:
                 searchparam += ' or topic:' + ''.join(term)
 
-            if n['material_id'] in wlist.keys():
+            i += 1
+            if n['material_id'] in wlist.keys() and cache:
+                print('loading wok for ' + n['full_formula'] + ' (' + str(i) + '/' + str(searchtotal) + ')')
                 wokresults.append(wlist[n['material_id']])
             else:
+                print('searching wok for ' + n['full_formula'] + ' (' + str(i) + '/' + str(searchtotal) + ')')
                 try:
                     searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
                 except Exception:
-                    searchdata = ({}, [])
+                    with open('wokRecord.json', 'wb') as record:
+                        json.dump(wlist, record)
+                    raise ('WoK Error')
+
                 searchdata[0].update(n)
                 wlist[n['material_id']] = searchdata
                 wokresults.append(searchdata)
@@ -256,7 +272,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit):
     return keywords, wokresults, keyresults
 
 
-def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
+def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, cache):
     fulltitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Full.csv')
     contitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Condensed.csv')
 
@@ -268,7 +284,7 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname):
         fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        keywords, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit)
+        keywords, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache)
 
         conheader = ['Material', 'Publications', 'Space Group', 'Calculated Band Gap']
         for n in keywords:

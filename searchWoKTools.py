@@ -6,12 +6,13 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from urlparse import urlparse
+import json
 try:
     from wordcloud import WordCloud, STOPWORDS
 except ImportError:
     pass
 
-def pingmaterialsproject(material, matlength=0):
+def getmaterialsproject(material, matlength=0):
     print('Searching Materials Project for '+material+'...')
 
     key = '0cVziFePTUfsawW8'
@@ -33,6 +34,35 @@ def pingmaterialsproject(material, matlength=0):
         pass
 
     return respdict
+
+def postmaterialsproject(postdata):
+
+    postdata.update({'properties':['pretty_formula',
+                                   'full_formula',
+                                   'total_magnetization',
+                                   'is_hubbard',
+                                   'formation_energy_per_atom'
+                                   'e_above_hull',
+                                   'band_gap',
+                                   'nsites',
+                                   'density',
+                                   'volume',
+                                   'spacegroup',
+                                   'cif']})
+
+    key = '0cVziFePTUfsawW8'
+    url = 'https://materialsproject.org/rest/v2/query'
+
+    postdata = {k: json.dumps(v) for k,v in postdata.iteritems()}
+
+    r = requests.post(url,
+                      headers={'X-API-KEY':key},
+                      data=postdata)
+
+    rdict = json.loads(r.text)['response']
+
+    return rdict
+
 
 def parsehtmlinput(querystring, keywordstring):
     querystring = querystring.replace(' ', '')
@@ -272,8 +302,12 @@ def findpdf(url):
 
         print('Getting PDF url...')
 
-        r = requests.get(url, timeout=5)
-        page = BeautifulSoup(r.text)
+        try:
+            r = requests.get(url, timeout=5)
+            page = BeautifulSoup(r.text)
+        except Exception:
+            print('PDF Problem')
+            return pdflink
 
         for link in page.findAll('a'):
             try:
@@ -358,6 +392,8 @@ def getsearchdata(searchparameters, doclimit=10):
 
     print("Searching for '" + searchparameters + "'...\n")
 
+    result_html = ''
+    result_url = 'N/A'
     try:
         s = requests.Session()
         s.get(r'http://www.webofknowledge.com', timeout=10)
@@ -404,9 +440,10 @@ def getsearchdata(searchparameters, doclimit=10):
         result_html = r.text
         result_url = r.url
     except requests.exceptions.Timeout:
-        print('WoK Timeout Error')
-        result_html = ''
-        result_url = 'N/A'
+        raise requests.exceptions.Timeout('WoK Timeout Error')
+
+    if result_html == None or result_url == None:
+        raise requests.exceptions.Timeout('WoK Connection Error')
 
     resultsoup = BeautifulSoup(result_html)
 
@@ -426,20 +463,25 @@ def getsearchdata(searchparameters, doclimit=10):
         resultdata = []
         prevtitle = ''
         i = 0
+        m = 1
 
-        for m in range(1, docnum + 1):
-            pagenum = (m - 1) % 10 + 1
-            print('Document ' + str(m) + ' loading...')
-
+        while m < (docnum+1):
             try:
+                pagenum = (m - 1) % 10 + 1
+                print('Document ' + str(m) + ' loading...')
+
                 pagepayload = {'SID': s.cookies['SID'],
                                'doc': str(m),
                                'page': str(pagenum),
                                'product': 'UA',
                                'qid': '1',
                                'search_mode': 'GeneralSearch'}
-                page_r = s.post(page_url, data=pagepayload, timeout=5)
 
+                page_r = s.post(page_url, data=pagepayload, timeout=10)
+            except Exception as inst:
+                print(type(inst))
+                m -= 1
+            else:
                 page_html = page_r.text
 
                 pagesoup = BeautifulSoup(page_html)
@@ -463,9 +505,8 @@ def getsearchdata(searchparameters, doclimit=10):
                     infodict.update({'pdflink': findpdf(infodict['DOIlink'])})
 
                     resultdata.append(infodict)
-            except Exception as inst:
-                print(type(inst))
 
+            m += 1
         searchdata = ({'numResults': truedocnum, 'searchURL': result_url}, resultdata)
 
         print('\n\nEnd Search\n' + str(i) + ' results found\n')
