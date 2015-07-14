@@ -20,6 +20,24 @@ mainKeywords = ['superconduct', 'conduct', 'resist', 'metal', 'insulator', 'dope
                 'charge density wave', 'band structure', 'susceptibility', 'NMR',
                 'nuclear magnetic resonance', 'neutron', 'mu-SR', 'x-ray']
 
+def readrawicsd(filename):
+    with open(os.path.join(os.getcwd(), 'rawICSD', filename + '.csv'), 'rb') as f:
+        reader = list(csv.reader(f))
+    icsdlist = []
+    for row in reader:
+        icsd_id = ''
+        for character in row[0]:
+            try:
+                int(character)
+            except ValueError:
+                icsdlist.append(icsd_id)
+                break
+            else:
+                icsd_id += character
+
+    resultstring='#' + '; #'.join(icsdlist)
+
+    return resultstring
 
 def readsearchcriteria(filename):
     with open(os.path.join(os.getcwd(), 'search_criteria', filename + '.csv'), 'rb') as f:
@@ -78,7 +96,10 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '<td class="results">' + str(result['nsites']) + '</td>'
             resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
-            resultstring += '<td class="results">Sym: ' + result['spacegroup']['symbol'] + '<br> Num:  ' + str(result['spacegroup']['number']) + '<br>PG: ' + result['spacegroup']['point_group'] + '<br>Sys: ' + result['spacegroup']['crystal_system'] + '<br>Hall: ' + str(result['spacegroup']['hall']) + '</td>'
+            try:
+                resultstring += '<td class="results">Sym: ' + result['spacegroup']['symbol'] + '<br> Num:  ' + str(result['spacegroup']['number']) + '<br>PG: ' + result['spacegroup']['point_group'] + '<br>Sys: ' + result['spacegroup']['crystal_system'] + '<br>Hall: ' + str(result['spacegroup']['hall']) + '</td>'
+            except:
+                resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '</td>'
             resultstring += '<td class="results"><a href="/getcif?cif=' + result['pretty_formula'] + '" target="_blank">CIF</a></td>'
             resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + result['material_id'] + '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
             resultstring += '</tr>'
@@ -162,7 +183,16 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache):
             mpresults.append(rlist['queries'][query])
         else:
             print('searching mp for ' + query + ' (' + str(i+1) + '/' + str(len(queries)) + ')')
-            result = searchWoKTools.getmaterialsproject(query)
+
+            try:
+                if query[0] == '#':
+                    result = searchWoKTools.postmaterialsproject({'criteria':{'icsd_ids':{'$in':[int(query[1:])]}}})
+                else:
+                    result = searchWoKTools.getmaterialsproject(query)
+            except Exception:
+                with open('mpRecord.json', 'wb') as record:
+                    json.dump(rlist, record)
+                raise ('MP Error')
             rlist['queries'][query] = result
             mpresults.append(result)
 
@@ -206,12 +236,19 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache):
                 mpresults.append(rlist['queries'][search])
             else:
                 print('searching mp for ' + search)
-                result = searchWoKTools.getmaterialsproject(search, 3)
+                try:
+                    result = searchWoKTools.getmaterialsproject(search, len(query))
+                except Exception:
+                    with open('mpRecord.json', 'wb') as record:
+                        json.dump(rlist, record)
+                    raise ('MP Error')
                 rlist['queries'][search] = result
                 mpresults.append(result)
 
     with open('mpRecord.json', 'wb') as record:
         json.dump(rlist, record)
+
+    mpresults = searchWoKTools.removerepeats(mpresults)
 
     return mpresults, keywords
 
@@ -253,7 +290,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache):
                 print('searching wok for ' + n['full_formula'] + ' (' + str(i) + '/' + str(searchtotal) + ')')
                 try:
                     searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
-                except Exception:
+                except Exception as inst:
                     with open('wokRecord.json', 'wb') as record:
                         json.dump(wlist, record)
                     raise ('WoK Error')
@@ -492,3 +529,4 @@ def automate_search(filename, searchlimit):
         return data
 
     generate_csv(filename)
+

@@ -67,7 +67,7 @@
         <tr style="height: 10px"></tr>
         <tr>
             <td style="width:10px"></td>
-            <td style="width:130px; text-align: left">Add sets:</td>
+            <td style="width:130px; text-align: left">Add Sets:</td>
             <td colspan="5" style="text-align: left">
                 <input type="checkbox" value="sulfides" onchange="addQuerySet(this)">sulfides
                 <input type="checkbox" value="selenides" onchange="addQuerySet(this)">selenides
@@ -111,6 +111,18 @@
                 <br> <br>
                 ABCD = <input type="text" name="permsum" id="permsum" readonly> <br>
                 <input type="button" name="addperm" id="addperm" value="Add Permutation">
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="text-align:left">Add Definitions:</td>
+            <td colspan="6" style="text-align:left">
+                Band Gap: <input type="number" step="0.1" style="width:50px" id="bandmin"> to <input type="number"step="0.1" style="width:50px" id="bandmax"> ||
+                Magnetization: <input type="number" style="width:50px" id="magmin"> to <input type="number" style="width:50px" id="magmax"> <br>
+                Spacegroup Symbol: <input type="text" id="spsym"> <br>
+                Spacegroup System: <input type="text" id="spsys"> <br>
+                <button disabled>Add Definition</button>
             </td>
         </tr>
         <tr>

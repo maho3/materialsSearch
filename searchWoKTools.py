@@ -36,19 +36,22 @@ def getmaterialsproject(material, matlength=0):
     return respdict
 
 def postmaterialsproject(postdata):
+    #{'criteria':{'spacegroup.crystal_system':{'$all':['triclinic']}}}
 
     postdata.update({'properties':['pretty_formula',
                                    'full_formula',
                                    'total_magnetization',
                                    'is_hubbard',
-                                   'formation_energy_per_atom'
+                                   'formation_energy_per_atom',
                                    'e_above_hull',
                                    'band_gap',
                                    'nsites',
                                    'density',
                                    'volume',
                                    'spacegroup',
-                                   'cif']})
+                                   'cif',
+                                   'material_id',
+                                   'unit_cell_formula']})
 
     key = '0cVziFePTUfsawW8'
     url = 'https://materialsproject.org/rest/v2/query'
@@ -273,7 +276,7 @@ def getdatainfo(pagedata):
 
 def getdoilink(doi):
     # Pings universal DOI server for a given DOI number; returns URL of journal article
-    if doi == 'N/A':
+    if doi == 'N/A' or doi == None:
         return 'N/A'
     else:
         pingurl = 'http://dx.doi.org/' + doi
@@ -382,6 +385,30 @@ def updatesc(searchcriteria):
 
     return upcrit
 
+def removerepeats(mpresults):
+    midresults=[]
+
+    for search in mpresults:
+        for result in search:
+            midresults.append(result)
+
+    upresults = []
+    for a in range(len(midresults)):
+        marker = False
+        for n in range(a + 1,len(midresults)):
+            for key in midresults[a].keys():
+                if midresults[a][key] != midresults[n][key]:
+                    marker=True
+                    break
+                else:
+                    marker=False
+            if not marker:
+                break
+        if marker:
+            upresults.append(midresults[a])
+
+    return [upresults]
+
 
 def getsearchdata(searchparameters, doclimit=10):
     #  General Search of searchParameters
@@ -394,56 +421,65 @@ def getsearchdata(searchparameters, doclimit=10):
 
     result_html = ''
     result_url = 'N/A'
-    try:
-        s = requests.Session()
-        s.get(r'http://www.webofknowledge.com', timeout=10)
+    counter = 0
+    while True:
+        try:
+            s = requests.Session()
+            s.get(r'http://www.webofknowledge.com', timeout=10)
 
-        gs_url = 'http://apps.webofknowledge.com/UA_GeneralSearch.do'
+            gs_url = 'http://apps.webofknowledge.com/UA_GeneralSearch.do'
 
-        payload = {'SID': s.cookies['SID'],
-                   'SinceLastVisit_DATE=': '',
-                   'SinceLastVisit_UTC=': '',
-                   'action': 'search',
-                   'endYear': '2015',
-                   'exp_notice': 'Search Error: Patent search term could be found in more than one family (unique '
-                                 'patent number required for Expand option) ',
-                   'fieldCount': '1',
-                   'formUpdated': 'true',
-                   'input_invalid_notice': 'Search Error: Please enter a search term',
-                   'input_invalid_notice_limits': '<br/>Note: Fields displayed in scrolling boxes must be combined '
-                                                  'with at least one other search field.',
-                   'limitStatus': 'collapsed',
-                   'max_field_count': '25',
-                   'max_field_notice': 'Notice: You cannot add another field.',
-                   'period': 'Range Selection',
-                   'product': 'UA',
-                   'range': 'ALL',
-                   'rs_sort_by': 'TC.D;PY.D;AU.A;SO.A;VL.D;PG.A',
-                   'sa_params': "UA||" + s.cookies['SID'] + "|http://apps.webofknowledge.com|'",
-                   'search_mode': 'GeneralSearch',
-                   'ssStatus': 'display:none',
-                   'ss_lemmatization': 'On',
-                   'ss_numDefaultGeneralSearchFields': '1',
-                   'ss_query_language': 'auto', 'ss_showsuggestions': 'ON',
-                   'ss_spellchecking': 'Suggest',
-                   'startYear': '1864',
-                   'update_back2search_link_param': 'yes',
-                   'x': '12',
-                   'y': '36'}
+            payload = {'SID': s.cookies['SID'],
+                       'SinceLastVisit_DATE=': '',
+                       'SinceLastVisit_UTC=': '',
+                       'action': 'search',
+                       'endYear': '2015',
+                       'exp_notice': 'Search Error: Patent search term could be found in more than one family (unique '
+                                     'patent number required for Expand option) ',
+                       'fieldCount': '1',
+                       'formUpdated': 'true',
+                       'input_invalid_notice': 'Search Error: Please enter a search term',
+                       'input_invalid_notice_limits': '<br/>Note: Fields displayed in scrolling boxes must be combined '
+                                                      'with at least one other search field.',
+                       'limitStatus': 'collapsed',
+                       'max_field_count': '25',
+                       'max_field_notice': 'Notice: You cannot add another field.',
+                       'period': 'Range Selection',
+                       'product': 'UA',
+                       'range': 'ALL',
+                       'rs_sort_by': 'TC.D;PY.D;AU.A;SO.A;VL.D;PG.A',
+                       'sa_params': "UA||" + s.cookies['SID'] + "|http://apps.webofknowledge.com|'",
+                       'search_mode': 'GeneralSearch',
+                       'ssStatus': 'display:none',
+                       'ss_lemmatization': 'On',
+                       'ss_numDefaultGeneralSearchFields': '1',
+                       'ss_query_language': 'auto', 'ss_showsuggestions': 'ON',
+                       'ss_spellchecking': 'Suggest',
+                       'startYear': '1864',
+                       'update_back2search_link_param': 'yes',
+                       'x': '12',
+                       'y': '36'}
 
-        payload.update(spdict)
+            payload.update(spdict)
 
-        print('Getting results page...')
+            print('Getting results page...')
 
-        r = s.post(gs_url, data=payload, timeout=10)
+            r = s.post(gs_url, data=payload, timeout=10)
 
-        result_html = r.text
-        result_url = r.url
-    except requests.exceptions.Timeout:
-        raise requests.exceptions.Timeout('WoK Timeout Error')
+            result_html = r.text
+            result_url = r.url
+        except requests.exceptions.Timeout:
+            print('WoK Timeout #' + str(counter))
+            counter += 1
+        else:
+            if result_html == None or result_url == None:
+                print('WoK Connection Error #' + str(counter))
+                counter += 1
+            else:
+                break
 
-    if result_html == None or result_url == None:
-        raise requests.exceptions.Timeout('WoK Connection Error')
+        if counter>10:
+            raise('WoK Error')
 
     resultsoup = BeautifulSoup(result_html)
 
@@ -464,6 +500,7 @@ def getsearchdata(searchparameters, doclimit=10):
         prevtitle = ''
         i = 0
         m = 1
+        counter = 0
 
         while m < (docnum+1):
             try:
@@ -481,6 +518,10 @@ def getsearchdata(searchparameters, doclimit=10):
             except Exception as inst:
                 print(type(inst))
                 m -= 1
+                counter += 1
+
+                if counter>10:
+                    raise('Connection Error')
             else:
                 page_html = page_r.text
 
@@ -505,6 +546,8 @@ def getsearchdata(searchparameters, doclimit=10):
                     infodict.update({'pdflink': findpdf(infodict['DOIlink'])})
 
                     resultdata.append(infodict)
+
+                counter = 0
 
             m += 1
         searchdata = ({'numResults': truedocnum, 'searchURL': result_url}, resultdata)
@@ -588,3 +631,4 @@ def generateabstractwc(searchdata):
     wc.generate(absstring)
 
     return wc
+
