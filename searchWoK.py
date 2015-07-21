@@ -105,7 +105,7 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '</tr>'
 
             i+=1
-    return json.dumps([resultstring, name, querystring, keystring])
+    return [resultstring, name, querystring, keystring]
 
 
 def parsewokkeys(keywords):
@@ -117,7 +117,7 @@ def parsewokkeys(keywords):
     return resultstring
 
 
-def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
+def parsewokdata(keywords, mpdata, wokdata, keydata, name, querystring, keystring):
     resultstring = ''
 
     for i in range(len(wokdata)):
@@ -149,7 +149,7 @@ def parsewokdata(keywords, wokdata, keydata, name, querystring, keystring):
         resultstring += '<tr value="' + str(i) + '" class="results selected" style="display:none" id="wokresult' + str(i) + '_full" value="full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
         resultstring += hidestring + '</tr>'
 
-    return json.dumps([parsewokkeys(keywords), resultstring, name, querystring, keystring])
+    return [parsewokkeys(keywords), parsempdata(mpdata,name,querystring,keystring)[0], resultstring, name, querystring, keystring]
 
 
 def parseprevload(prevload):
@@ -161,8 +161,8 @@ def parseprevload(prevload):
     return resultstring
 
 
-def handlehtmlsearch_mp(querystring, keywordstring, cache):
-    queries, permqueries, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
+def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
+    queries, permqueries, constraints, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
 
     with open('mpRecord.json', 'rb') as record:
         rec = record.read()
@@ -189,10 +189,10 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache):
                     result = searchWoKTools.postmaterialsproject({'criteria':{'icsd_ids':{'$in':[int(query[1:])]}}})
                 else:
                     result = searchWoKTools.getmaterialsproject(query)
-            except Exception:
+            except:
                 with open('mpRecord.json', 'wb') as record:
                     json.dump(rlist, record)
-                raise ('MP Error')
+                raise
             rlist['queries'][query] = result
             mpresults.append(result)
 
@@ -238,10 +238,10 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache):
                 print('searching mp for ' + search)
                 try:
                     result = searchWoKTools.getmaterialsproject(search, len(query))
-                except Exception:
+                except:
                     with open('mpRecord.json', 'wb') as record:
                         json.dump(rlist, record)
-                    raise ('MP Error')
+                    raise
                 rlist['queries'][search] = result
                 mpresults.append(result)
 
@@ -250,11 +250,16 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache):
 
     mpresults = searchWoKTools.removerepeats(mpresults)
 
-    return mpresults, keywords
+    if smartconstrain:
+        mpresults = searchWoKTools.smartconstraint(mpresults)
+
+    mpresults = searchWoKTools.removeconstrainedmp(mpresults, constraints)
+
+    return mpresults, keywords, constraints
 
 
-def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache):
-    mpsearch, keywords = handlehtmlsearch_mp(querystring, keywordstring, cache)
+def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartconstrain):
+    mpsearch, keywords, constraints = handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain)
 
     with open('wokRecord.json', 'rb') as record:
         try:
@@ -290,14 +295,16 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache):
                 print('searching wok for ' + n['full_formula'] + ' (' + str(i) + '/' + str(searchtotal) + ')')
                 try:
                     searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
-                except Exception as inst:
+                except:
                     with open('wokRecord.json', 'wb') as record:
                         json.dump(wlist, record)
-                    raise ('WoK Error')
+                    raise
 
                 searchdata[0].update(n)
                 wlist[n['material_id']] = searchdata
                 wokresults.append(searchdata)
+
+    mpsearch, wokresults = searchWoKTools.removeconstrainedwok(mpsearch, wokresults, constraints)
 
     with open('wokRecord.json', 'wb') as record:
         json.dump(wlist, record)
@@ -306,10 +313,10 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache):
     for search in wokresults:
         keyresults.append(searchWoKTools.getkeylist(search, keywords))
 
-    return keywords, wokresults, keyresults
+    return keywords, mpsearch, wokresults, keyresults
 
 
-def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, cache):
+def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, cache, smartconstrain):
     fulltitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Full.csv')
     contitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Condensed.csv')
 
@@ -321,7 +328,7 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, ca
         fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        keywords, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache)
+        keywords, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartconstrain)
 
         conheader = ['Material', 'Publications', 'Space Group', 'Calculated Band Gap']
         for n in keywords:

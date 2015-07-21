@@ -58,9 +58,22 @@ def postmaterialsproject(postdata):
 
     postdata = {k: json.dumps(v) for k,v in postdata.iteritems()}
 
-    r = requests.post(url,
-                      headers={'X-API-KEY':key},
-                      data=postdata)
+    trying = True
+    count = 0
+    while trying and count<10:
+        try:
+            r = requests.post(url,
+                              headers={'X-API-KEY':key},
+                              data=postdata)
+        except Exception:
+            print('Trying again...' + str(count))
+            count += 1
+        else:
+            trying = False
+            count = 0
+
+    if count >= 10:
+        raise
 
     rdict = json.loads(r.text)['response']
 
@@ -84,6 +97,7 @@ def parsehtmlinput(querystring, keywordstring):
 
     queries = []
     queryperms = []
+    constraints = []
 
     for n in range(len(querylist)):
         marker = 0
@@ -96,6 +110,8 @@ def parsehtmlinput(querystring, keywordstring):
                 pass
             elif querylist[n][0] == '[':
                 queryperms.append(querylist[n])
+            elif querylist[n][0] == '{':
+                constraints.append(eval(querylist[n].replace('[,','[None,').replace(',]',',None]')))
             else:
                 queries.append(querylist[n])
 
@@ -111,7 +127,7 @@ def parsehtmlinput(querystring, keywordstring):
                 keylist[n] = keylist[n].replace('\\\\', '\\')
                 keywords.append(keylist[n])
 
-    return queries, queryperms, keywords
+    return queries, queryperms, constraints, keywords
 
 def getsearchtype(searchtype):
     # Returns search code for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do
@@ -409,6 +425,73 @@ def removerepeats(mpresults):
 
     return [upresults]
 
+def smartconstraint(mpresults):
+    cations = set(['Ba','Sr','La','Ca','K','Na','Li','Sc','Y','Pb','Bi'])
+    trmetals = set(['Ti','V','Cr','Mn','Fe','Co','Ni',
+               'Zr','Nb','Mo','Tc','Ru','Rh','Pd'])
+    anions = set(['N','P','As','O','S','Se','Te','F','Cl','B','I','Sb','Ge','Sr','C','B'])
+
+    contrmetals = ['Cu','Ag','Au']
+    electroneg = ['O','S','F','Cl','Br']
+
+    newMP = []
+    for search in mpresults:
+        for result in search:
+            composition = set(result['unit_cell_formula'].keys())
+            if len(composition.intersection(anions)) != 0:
+                if len(composition.intersection(trmetals)) != 0:
+                    newMP.append(result)
+                elif len(composition.intersection(electroneg)) != 0 and len(composition.intersection(contrmetals)):
+                    newMP.append(result)
+
+    return [newMP]
+
+def removeconstrainedmp(mpresults, constraints):
+
+    for constrain in constraints:
+        midresults = []
+
+        for search in mpresults:
+            for result in search:
+                if (constrain['bgap'][0] is not None and constrain['bgap'][0] > result['band_gap']) or \
+                    (constrain['bgap'][1] is not None and constrain['bgap'][1] < result['band_gap']) or \
+                    (constrain['mag'][0] is not None and constrain['mag'][0] > result['total_magnetization']) or \
+                    (constrain['mag'][1] is not None and constrain['mag'][1] < result['total_magnetization']):
+                    pass
+                else:
+                    midresults.append(result)
+
+        mpresults = [midresults]
+
+    return mpresults
+
+def removeconstrainedwok(mpresults, wokresults, constraints):
+
+    for constrain in constraints:
+        midresults = []
+
+        for result in wokresults:
+            if (constrain['pub'][0] is not None and constrain['pub'][0] > result[0]['numResults']) or \
+                (constrain['pub'][1] is not None and constrain['pub'][1] < result[0]['numResults']):
+                pass
+            else:
+                midresults.append(result)
+
+        wokresults = midresults
+
+    midmp = []
+    for search in mpresults:
+        for result in search:
+            midmp.append(result)
+
+    newMP = []
+
+    for j in range(len(midmp)):
+        for i in range(len(wokresults)):
+            if midmp[j]['material_id'] == wokresults[i][0]['material_id']:
+                newMP.append(midmp[j])
+
+    return [newMP], wokresults
 
 def getsearchdata(searchparameters, doclimit=10):
     #  General Search of searchParameters
@@ -422,7 +505,9 @@ def getsearchdata(searchparameters, doclimit=10):
     result_html = ''
     result_url = 'N/A'
     counter = 0
-    while True:
+
+    pingWoK = True
+    while pingWoK:
         try:
             s = requests.Session()
             s.get(r'http://www.webofknowledge.com', timeout=10)
@@ -471,12 +556,15 @@ def getsearchdata(searchparameters, doclimit=10):
         except requests.exceptions.Timeout:
             print('WoK Timeout #' + str(counter))
             counter += 1
+        except requests.exceptions.ConnectionError:
+            print('WoK Connection Error #' + str(counter))
+            counter += 1
         else:
             if result_html == None or result_url == None:
                 print('WoK Connection Error #' + str(counter))
                 counter += 1
             else:
-                break
+                pingWoK = False
 
         if counter>10:
             raise('WoK Error')

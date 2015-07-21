@@ -116,13 +116,14 @@
         <tr style="height:15px"></tr>
         <tr>
             <td style="width:10px"></td>
-            <td style="text-align:left">Add Definitions:</td>
+            <td style="text-align:left">Add Constraint:</td>
             <td colspan="6" style="text-align:left">
                 Band Gap: <input type="number" step="0.1" style="width:50px" id="bandmin"> to <input type="number"step="0.1" style="width:50px" id="bandmax"> ||
                 Magnetization: <input type="number" style="width:50px" id="magmin"> to <input type="number" style="width:50px" id="magmax"> <br>
-                Spacegroup Symbol: <input type="text" id="spsym"> <br>
-                Spacegroup System: <input type="text" id="spsys"> <br>
-                <button disabled>Add Definition</button>
+                Number of Publications: <input type="number" style="width:50px" id="pubmin" min="0"> to <input type="number" style="width:50px" id="pubmax" min="0"><br>
+                Element Composition:
+                <button onclick="addCon(); return false;">Add Constraint</button>
+                <button onclick="remCon(); return false;">Remove Constraint</button>
             </td>
         </tr>
         <tr>
@@ -167,7 +168,8 @@
                 <button type="submit" id="loadbutton" value="load">Load</button>
             </td>
             <td colspan="2" style="text-align:left">
-                <input type="checkbox" id="usecache" value="usecache" checked>Use Cache
+                <input type="checkbox" id="usecache" value="usecache" checked>Use Cache <br>
+                <input type="checkbox" id="smartconstrain" value="smartconstrain">Smart Constrain
             </td>
         </tr>
         <tr>

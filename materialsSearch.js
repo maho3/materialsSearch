@@ -67,6 +67,26 @@ function addQuerySet(set){
     }
 }
 
+function addCon(){
+    var resString = '{';
+
+    resString += '"bgap":[' + $('#bandmin').val() + ',' + $('#bandmax').val() + '],';
+    resString += '"mag":[' + $('#magmin').val() + ',' + $('#magmax').val() + '],';
+    resString += '"pub":[' + $('#pubmin').val() + ',' + $('#pubmax').val() + ']';
+    resString += '}; '
+
+    document.getElementById("queries").value += resString;
+}
+
+function remCon(){
+    var querystring = document.getElementById("queries").value
+
+    var a = querystring.search("{")
+    var b = querystring.search("}")
+
+    document.getElementById("queries").value = querystring.substr(0,a) + querystring.substring(b+1)
+}
+
 function resetKeyDefault(){
     document.getElementById("keywords").value=''
     for (var i = 0; i<keywords.length; i++) {
@@ -177,7 +197,7 @@ function sortby(type, search, elem){
             if (search == 'mp'){
                 $("#mpresults > tbody").empty().append(data[0][0]);
                 if (data[1][1] != ''){
-                    $("#wokresults > tbody").empty().append(data[1][1]);
+                    $("#wokresults > tbody").empty().append(data[1][2]);
                 }
             } else {
                 $("#wokresults > tbody").empty().append(data[0][0]);
@@ -378,7 +398,8 @@ $(document).ready(function() {
             searchlimit:$('[name="searchlimit"]').val(),
             load:$('#prevLoad option:selected').text(),
             searchtype:$(this).val(),
-            usecache:$('#usecache').prop('checked')},
+            usecache:$('#usecache').prop('checked'),
+            smartconstrain:$('#smartconstrain').prop('checked')},
 
             function(data){
                 $('#serverstatus').append('Done!' + '&#13;&#10;');
@@ -394,12 +415,14 @@ $(document).ready(function() {
 
                 } else if (event.target.id == 'wokbutton') {
 
-                    $('[name="queries"]').val(data[3])
-                    $('[name="keywords"]').val(data[4])
-                    $("#woktitle").empty().append(data[2])
+                    $('[name="queries"]').val(data[4])
+                    $('[name="keywords"]').val(data[5])
+                    $("#woktitle").empty().append(data[3])
+                    $("#mptitle").empty().append(data[3])
                     $("#wokcols").empty().append(data[0]);
-                    $("#wokresults > tbody").empty().append(data[1]);
-                    $("#prevLoad").append($('<option>', {value: data[2]}).text(data[2]));
+                    $("#mpresults > tbody").empty().append(data[1]);
+                    $("#wokresults > tbody").empty().append(data[2]);
+                    $("#prevLoad").append($('<option>', {value: data[3]}).text(data[3]));
 
                 } else if (event.target.id == 'csvbutton') {
                     $('#response').empty().append("Done! CSV-WC's generated. Check " + data[0]);
@@ -407,13 +430,19 @@ $(document).ready(function() {
                 } else if (event.target.id == 'loadbutton') {
                     var loadfile = $('#prevLoad option:selected').text()
 
-                    $('[name="queries"]').val(data[2])
-                    $('[name="keywords"]').val(data[3])
                     if (loadfile.substr(-7) == '_mp.txt'){
+                        $('[name="queries"]').val(data[2])
+                        $('[name="keywords"]').val(data[3])
+                        $("#mptitle").empty().append(data[1])
                         $("#mpresults > tbody").empty().append(data[0]);
                     } else if (loadfile.substr(-8) == '_wok.txt'){
-                        $("#wokresults > thead > tr").empty().append(data[0]);
-                        $("#wokresults > tbody").empty().append(data[1]);
+                        $('[name="queries"]').val(data[4])
+                        $('[name="keywords"]').val(data[5])
+                        $("#woktitle").empty().append(data[3])
+                        $("#mptitle").empty().append(data[3])
+                        $("#wokcols").empty().append(data[0]);
+                        $("#mpresults > tbody").empty().append(data[1]);
+                        $("#wokresults > tbody").empty().append(data[2]);
                     }
                 }
         })

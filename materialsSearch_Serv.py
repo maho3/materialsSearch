@@ -103,86 +103,89 @@ def mainapp():
         if searchtype=='load':
             loadsearch = escape(d['load'])
 
+            print('Generating load of ' + loadsearch)
+
             with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', loadsearch), 'rb') as f:
                 loaddata = load(f)
 
             if loadsearch[-7:] == '_mp.txt':
-                response_body = searchWoK.parsempdata(loaddata[0], '', loaddata[1], loaddata[2])
+                response_body = dumps(searchWoK.parsempdata(loaddata[0], loadsearch, loaddata[1], loaddata[2]))
             elif loadsearch[-8:] == '_wok.txt':
-                response_body = searchWoK.parsewokdata(loaddata[0], loaddata[1], loaddata[2], '', loaddata[3], loaddata[4])
+                response_body = dumps(searchWoK.parsewokdata(loaddata[0], loaddata[1], loaddata[2], loaddata[3], loadsearch, loaddata[4], loaddata[5]))
         elif searchtype=='sort':
-            sortname = escape(d['sortname'])
-            partname = escape(d['partname'])
-            sorttype = escape(d['sorttype'])
-            sortdir = bool(escape(d['sortdir']) == 'true')
+            try:
+                sortname = escape(d['sortname'])
+                partname = escape(d['partname'])
+                sorttype = escape(d['sorttype'])
+                sortdir = bool(escape(d['sortdir']) == 'true')
 
-            with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', sortname), 'rb') as f:
-                sortdata = load(f)
+                with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', sortname), 'rb') as f:
+                    sortdata = load(f)
 
-            sortlist = []
+                sortlist = []
 
-            for search in sortdata[0]:
-                for result in search:
-                    sortlist.append(result)
+                if sortname[-6:] == 'mp.txt':
+                    sortmain = sortdata[0]
+                else:
+                    sortmain = sortdata[1]
 
-            def getSort(item):
-                if sorttype == "fform":
-                    return item['full_formula']
-                elif sorttype == "mag":
-                    return item['total_magnetization']
-                elif sorttype == "forme":
-                    return item['formation_energy_per_atom']
-                elif sorttype == "ehull":
-                    return item['e_above_hull']
-                elif sorttype == "gap":
-                    return item['band_gap']
-                elif sorttype == "nsites":
-                    return item['nsites']
-                elif sorttype == "den":
-                    return item['density']
-                elif sorttype == "vol":
-                    return item['volume']
-                elif sorttype == "sg":
-                    return item['spacegroup']['symbol']
+                for search in sortmain:
+                    for result in search:
+                        sortlist.append(result)
 
-            sortedlist = sorted(sortlist, key=getSort)
+                def getSort(item):
+                    if sorttype == "fform":
+                        return item['full_formula']
+                    elif sorttype == "mag":
+                        return item['total_magnetization']
+                    elif sorttype == "forme":
+                        return item['formation_energy_per_atom']
+                    elif sorttype == "ehull":
+                        return item['e_above_hull']
+                    elif sorttype == "gap":
+                        return item['band_gap']
+                    elif sorttype == "nsites":
+                        return item['nsites']
+                    elif sorttype == "den":
+                        return item['density']
+                    elif sorttype == "vol":
+                        return item['volume']
+                    elif sorttype == "sg":
+                        return item['spacegroup']['symbol']
 
-            if sortdir:
-                sortedlist = list(reversed(sortedlist))
+                sortedlist = sorted(sortlist, key=getSort)
 
-            if sortname[-6:] == 'mp.txt':
-                sorthead = 'mp'
-            else:
-                sorthead = 'wok'
+                if sortdir:
+                    sortedlist = list(reversed(sortedlist))
 
-            response_body = [searchWoK.parsempdata([sortedlist], '', sortdata[1], sortdata[2]),dumps(['','','','',''])]
+                response_body = [dumps(searchWoK.parsempdata([sortedlist], '', sortdata[1], sortdata[2]),dumps(['','','','',''])),'']
 
-            if partname != '':
-                with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', partname), 'rb') as f:
-                    partdata = load(f)
+                if partname != '':
 
-                if len(sortedlist) == len(partdata[1]):
-                    newWoK = []
-                    newKey = []
+                    if len(sortedlist) == len(sortdata[2]):
+                        newWoK = []
+                        newKey = []
 
-                    for j in range(len(sortedlist)):
-                        for i in range(len(partdata[1])):
-                            if sortedlist[j]['material_id'] == partdata[1][i][0]['material_id']:
-                                newWoK.append(partdata[1][i])
-                                newKey.append(partdata[2][i])
+                        for j in range(len(sortedlist)):
+                            for i in range(len(sortdata[2])):
+                                if sortedlist[j]['material_id'] == sortdata[2][i][0]['material_id']:
+                                    newWoK.append(sortdata[2][i])
+                                    newKey.append(sortdata[3][i])
 
-                    if len(sortedlist) == len(newWoK):
-                        response_body[1] = searchWoK.parsewokdata(partdata[0], newWoK, newKey, partname, partdata[3], partdata[4])
+                        if len(sortedlist) == len(newWoK):
+                            response_body[1] = dumps(searchWoK.parsewokdata(sortdata[0], [sortedlist], newWoK, newKey, sortdata[3], sortdata[4], sortdata[5]))
 
-            response_body = dumps(response_body)
-
-
+                response_body = dumps(response_body)
+            except Exception as inst:
+                print(inst)
+                print(type(inst))
 
     elif searchtype=='mp' or searchtype=='wok' or searchtype=='csv':
         queries = escape(d['queries'])
         keywords = escape(d['keywords'])
         searchname = escape(d['name'])
         usecache = bool(escape(d['usecache'])=='true')
+        smartconstrain = bool(escape(d['smartconstrain'])=='true')
 
         if searchtype == 'mp':
             if searchname == '':
@@ -197,12 +200,12 @@ def mainapp():
 
             q.put('Search name is: ' + searchname)
 
-            mpsearch, keys = searchWoK.handlehtmlsearch_mp(queries, keywords, usecache)
+            mpsearch, keys, constraints = searchWoK.handlehtmlsearch_mp(queries, keywords, usecache, smartconstrain)
 
             with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname), 'wb') as outfile:
                 dump([mpsearch, queries, keywords], outfile)
 
-            response_body = searchWoK.parsempdata(mpsearch, searchname, queries, keywords)
+            response_body = dumps(searchWoK.parsempdata(mpsearch, searchname, queries, keywords))
 
         elif searchtype=='wok' or searchtype=='csv':
             searchlimit = escape(d['searchlimit'])
@@ -220,12 +223,13 @@ def mainapp():
 
                 q.put('Search name is: ' + searchname)
 
-                keys, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit), usecache)
+                keys, mpdata, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit), usecache, smartconstrain)
 
                 with open(os.path.join(os.getcwd(), 'materialsSearchLoadFiles', searchname), 'wb') as outfile:
-                    dump([keys, wokdata, keydata, queries, keywords], outfile)
+                    dump([keys, mpdata, wokdata, keydata, queries, keywords], outfile)
 
-                response_body = searchWoK.parsewokdata(keys, wokdata, keydata, searchname, queries, keywords)
+                response_body = dumps(searchWoK.parsewokdata(keys, mpdata, wokdata, keydata, searchname, queries, keywords))
+
             elif searchtype == 'csv':
                 prevcsv = next(os.walk(os.path.join(os.getcwd(), 'materialsSearchCSV-WC')))
 
@@ -236,9 +240,7 @@ def mainapp():
                             searchname = 'search' + str(i)
                             break
 
-
-
-                response_body = searchWoK.handlehtmlsearch_csv(queries, keywords, int(searchlimit), searchname, usecache)
+                response_body = searchWoK.handlehtmlsearch_csv(queries, keywords, int(searchlimit), searchname, usecache, smartconstrain)
 
 
     response = Response()
