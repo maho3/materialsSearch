@@ -10,6 +10,7 @@ import searchWoK
 import searchWoKTools
 import os
 from json import dump, dumps, load
+from re import sub
 
 try:
     from urlparse import parse_qs
@@ -152,6 +153,13 @@ def mainapp():
                         return item['volume']
                     elif sorttype == "sg":
                         return item['spacegroup']['symbol']
+                    elif sorttype[:4] == "elem":
+                        try:
+                            return sub("(-?\d+)|(\+1)", ' ', item['full_formula']).split()[int(sorttype[4:])-1] + item['full_formula']
+                        except Exception as inst:
+                            print(inst)
+                            print(type(inst))
+                            return 'zz' + item['full_formula']
 
                 sortedlist = sorted(sortlist, key=getSort)
 

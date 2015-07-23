@@ -6,7 +6,7 @@
                 text-align:center;
                 width: 100px;
                 vertical-align: top;
-                border-collapse:collapse}
+                border-collapse:collapse;}
 
     th          {font-size: 150%%;
                 font-weight: normal}
@@ -55,7 +55,7 @@
 
 <hr>
 <form method="post" action="/submit" id="ajaxform">
-    <table style="width:100%%">
+    <table style="width:100%">
         <tr>
             <th colspan="7" style="text-align: left">Queries: </th>
         </tr>
@@ -128,7 +128,7 @@
         </tr>
         <tr>
             <td style="width:10px"></td>
-            <td colspan="6" style="text-align:left">
+            <td colspan="7" style="text-align:left">
                 <br>
                 <textarea name="queries" id="queries" rows="10" cols="60" placeholder="Enter queries here..."></textarea>
             </td>
@@ -144,7 +144,7 @@
         <tr style="height: 10px"></tr>
         <tr>
             <td style="width:10px"></td>
-            <td colspan="5" style="text-align:left">
+            <td colspan="7" style="text-align:left">
                 <textarea name="keywords" id="keywords" rows="10" cols="60" placeholder="Enter keywords here..."></textarea>
             </td>
         </tr>
@@ -191,21 +191,24 @@
     <h2>Results:</h2>
     <textarea id="serverstatus" rows="10" cols="60" placeholder="SERVER UPDATES HERE" readonly></textarea><br><br>
     <button id="showmp">Display MP Results</button><button id="showwok">Display WoK Results</button><br><br>
+    <input id="sortElem" type="number" min="0" max="6"> <button onclick="sortbyElem()">Sort by Element</button><br><br>
+
+
     MP: <span id="mptitle"></span><br>
     <table class="results" id="mpresults" style="width:100%; display:none">
         <thead>
         <tr class="results">
             <td class="resultTitle">Formula</td>
-            <td class="mpresultTitle" onclick="sortby('fform','mp',this)">Full Formula</td>
-            <td class="mpresultTitle" onclick="sortby('mag','mp',this)">Total Magnetization</td>
+            <td class="mpresultTitle" onclick="sortbyResults('fform','mp',this)">Full Formula</td>
+            <td class="mpresultTitle" onclick="sortbyResults('mag','mp',this)">Total Magnetization</td>
             <td class="resultTitle">Is Hubbard</td>
-            <td class="mpresultTitle" onclick="sortby('forme','mp',this)">Formation Energy (eV)</td>
-            <td class="mpresultTitle" onclick="sortby('ehull','mp',this)">E Above Hull (eV)</td>
-            <td class="mpresultTitle" onclick="sortby('gap','mp',this)">Band Gap (eV)</td>
-            <td class="mpresultTitle" onclick="sortby('nsites','mp',this)">Nsites</td>
-            <td class="mpresultTitle" onclick="sortby('den','mp',this)">Density (gm/cc)</td>
-            <td class="mpresultTitle" onclick="sortby('vol','mp',this)">Volume</td>
-            <td class="mpresultTitle" onclick="sortby('sg','mp',this)">Spacegroup</td>
+            <td class="mpresultTitle" onclick="sortbyResults('forme','mp',this)">Formation Energy (eV)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('ehull','mp',this)">E Above Hull (eV)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('gap','mp',this)">Band Gap (eV)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('nsites','mp',this)">Nsites</td>
+            <td class="mpresultTitle" onclick="sortbyResults('den','mp',this)">Density (gm/cc)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('vol','mp',this)">Volume</td>
+            <td class="mpresultTitle" onclick="sortbyResults('sg','mp',this)">Spacegroup</td>
             <td class="resultTitle">CIF</td>
             <td class="resultTitle">Model</td>
         </tr>

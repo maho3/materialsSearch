@@ -166,7 +166,7 @@ function hoveroff(id){
     $('#wok' + id + '_full').addClass('selected');
 }
 
-function sortby(type, search, elem){
+function sortbyResults(type, search, elem){
     $('#serverstatus').empty().append('Generating sort...' + "&#13;&#10;");
 
     url = $('#ajaxform').attr( "action" );
@@ -220,6 +220,42 @@ function sortby(type, search, elem){
     } else {
         $(elem).text($(elem).text() + '\u25b2')
     }
+}
+
+function sortbyElem(){
+    $('#serverstatus').empty().append('Generating sort...' + "&#13;&#10;");
+
+    var sn = $('#mptitle').text();
+    var pn = $('#woktitle').text()
+
+    url = $('#ajaxform').attr( "action" );
+
+    event.preventDefault();
+
+    var elemNum = $('#sortElem').val()
+
+    $.post(url,{
+        searchtype:'sort',
+        sortname:sn,
+        partname:pn,
+        sorttype:'elem'+elemNum,
+        sortdir:'True'})
+        .done( function(data){
+            $('#serverstatus').append('Done!' + '&#13;&#10;');
+            data = JSON.parse(data);
+            data[0] = JSON.parse(data[0]);
+            data[1] = JSON.parse(data[1]);
+
+            $("#mpresults > tbody").empty().append(data[0][0]);
+            if (data[1][1] != ''){
+                $("#wokresults > tbody").empty().append(data[1][2]);
+            }
+
+            })
+        .fail(function(xhr, textStatus, errorThrown){
+            $('#serverstatus').append('&#13;&#10;' + '*****ERROR THROWN*****' + '&#13;&#10;');
+            alert("error");
+        });
 }
 
 

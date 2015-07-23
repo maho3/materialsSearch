@@ -51,7 +51,8 @@ def postmaterialsproject(postdata):
                                    'spacegroup',
                                    'cif',
                                    'material_id',
-                                   'unit_cell_formula']})
+                                   'unit_cell_formula',
+                                   'elements']})
 
     key = '0cVziFePTUfsawW8'
     url = 'https://materialsproject.org/rest/v2/query'
@@ -427,6 +428,7 @@ def removerepeats(mpresults):
 
 def smartconstraint(mpresults):
     cations = set(['Ba','Sr','La','Ca','K','Na','Li','Sc','Y','Pb','Bi'])
+
     trmetals = set(['Ti','V','Cr','Mn','Fe','Co','Ni',
                'Zr','Nb','Mo','Tc','Ru','Rh','Pd'])
     anions = set(['N','P','As','O','S','Se','Te','F','Cl','B','I','Sb','Ge','Sr','C','B'])
