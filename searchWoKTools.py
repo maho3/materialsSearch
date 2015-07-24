@@ -1,3 +1,7 @@
+"""Tools for searchWoK; Contains backend functions for searching materials databases"""
+
+# coding=utf-8
+
 from __future__ import print_function
 
 __author__ = 'eager55'
@@ -7,17 +11,20 @@ from bs4 import BeautifulSoup
 import re
 from urlparse import urlparse
 import json
+
 try:
     from wordcloud import WordCloud, STOPWORDS
 except ImportError:
     pass
 
+
 def getmaterialsproject(material, matlength=0):
-    print('Searching Materials Project for '+material+'...')
+    """Pings GET request from materials project for data"""
+    print('Searching Materials Project for ' + material + '...')
 
     key = '0cVziFePTUfsawW8'
 
-    url = 'https://www.materialsproject.org/rest/v1/materials/'+material+'/vasp?API_KEY='+key
+    url = 'https://www.materialsproject.org/rest/v1/materials/' + material + '/vasp?API_KEY=' + key
     respdict = []
     try:
         r = requests.get(url)
@@ -35,38 +42,41 @@ def getmaterialsproject(material, matlength=0):
 
     return respdict
 
-def postmaterialsproject(postdata):
-    #{'criteria':{'spacegroup.crystal_system':{'$all':['triclinic']}}}
 
-    postdata.update({'properties':['pretty_formula',
-                                   'full_formula',
-                                   'total_magnetization',
-                                   'is_hubbard',
-                                   'formation_energy_per_atom',
-                                   'e_above_hull',
-                                   'band_gap',
-                                   'nsites',
-                                   'density',
-                                   'volume',
-                                   'spacegroup',
-                                   'cif',
-                                   'material_id',
-                                   'unit_cell_formula',
-                                   'elements']})
+def postmaterialsproject(postdata):
+    """
+    Pings POST request from materials project for data
+    :param postdata: Example - {'criteria':{'spacegroup.crystal_system':{'$all':['triclinic']}}}
+    """
+    postdata.update({'properties': ['pretty_formula',
+                                    'full_formula',
+                                    'total_magnetization',
+                                    'is_hubbard',
+                                    'formation_energy_per_atom',
+                                    'e_above_hull',
+                                    'band_gap',
+                                    'nsites',
+                                    'density',
+                                    'volume',
+                                    'spacegroup',
+                                    'cif',
+                                    'material_id',
+                                    'unit_cell_formula',
+                                    'elements']})
 
     key = '0cVziFePTUfsawW8'
     url = 'https://materialsproject.org/rest/v2/query'
 
-    postdata = {k: json.dumps(v) for k,v in postdata.iteritems()}
+    postdata = {k: json.dumps(v) for k, v in postdata.iteritems()}
 
     trying = True
     count = 0
-    while trying and count<10:
+    while trying and count < 10:
         try:
             r = requests.post(url,
-                              headers={'X-API-KEY':key},
+                              headers={'X-API-KEY': key},
                               data=postdata)
-        except Exception:
+        except requests.exceptions.RequestException:
             print('Trying again...' + str(count))
             count += 1
         else:
@@ -82,6 +92,12 @@ def postmaterialsproject(postdata):
 
 
 def parsehtmlinput(querystring, keywordstring):
+    """
+    Reads input HTML data and returns array of parsed value strings
+    :param querystring: Query string from HTML input
+    :param keywordstring: Keyword string from HTML input
+    :return: Tuple of array of strings
+    """
     querystring = querystring.replace(' ', '')
     querylist = querystring.split(';')
 
@@ -112,7 +128,7 @@ def parsehtmlinput(querystring, keywordstring):
             elif querylist[n][0] == '[':
                 queryperms.append(querylist[n])
             elif querylist[n][0] == '{':
-                constraints.append(eval(querylist[n].replace('[,','[None,').replace(',]',',None]')))
+                constraints.append(eval(querylist[n].replace('[,', '[None,').replace(',]', ',None]')))
             else:
                 queries.append(querylist[n])
 
@@ -130,8 +146,9 @@ def parsehtmlinput(querystring, keywordstring):
 
     return queries, queryperms, constraints, keywords
 
+
 def getsearchtype(searchtype):
-    # Returns search code for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do
+    """Returns search code for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do"""
 
     if searchtype == 'title':
         search = 'TI'
@@ -160,7 +177,7 @@ def getsearchtype(searchtype):
 
 
 def getreltype(reltype):
-    # Returns search parameter relation codes for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do
+    """Returns search relation codes for posting requests to http://apps.webofknowledge.com/UA_GeneralSearch.do"""
 
     if reltype == 'and':
         rel = 'AND'
@@ -175,8 +192,11 @@ def getreltype(reltype):
 
 
 def getsearchparameterdict(searchparameters):
-    #  Parses search parameter string; returns data relevant to the request headers in a dictionary
-    #  Example: searchParameters='TITLE:BaVS3 AND Topic:magnetism OR TOPIC:ferromagnetic'
+    """
+    Parses search parameter string; returns data relevant to the request headers in a dictionary
+    Example: searchParameters='TITLE:BaVS3 AND Topic:magnetism OR TOPIC:ferromagnetic'
+    """
+
     plist = searchparameters.lower()
     plist = plist.split()
 
@@ -203,7 +223,7 @@ def getsearchparameterdict(searchparameters):
 
 
 def getdatainfo(pagedata):
-    #  Searches article HTML for relevant data; returns a dictionary of this data
+    """Searches article HTML for relevant data; returns a dictionary of this data"""
 
     authorblock = pagedata.find('div', 'block-record-info').p
     pubblock = pagedata.find('div', 'block-record-info block-record-info-source')
@@ -292,8 +312,9 @@ def getdatainfo(pagedata):
 
 
 def getdoilink(doi):
-    # Pings universal DOI server for a given DOI number; returns URL of journal article
-    if doi == 'N/A' or doi == None:
+    """Pings universal DOI server for a given DOI number; returns URL of journal article"""
+
+    if doi == 'N/A' or doi is None:
         return 'N/A'
     else:
         pingurl = 'http://dx.doi.org/' + doi
@@ -307,25 +328,26 @@ def getdoilink(doi):
         try:
             pingr = pingdoi.get(pingurl, timeout=5)
             return pingr.url
-        except Exception:
+        except requests.exceptions.RequestException:
             print('DOI problem')
             return pingurl
 
 
 def findpdf(url):
-    # Searches journal article page for PDF link; returns PDF link
+    """Searches journal article page for PDF link; returns PDF link"""
+
     if url == 'N/A':
         return 'N/A'
     else:
         pdflink = 'N/A'
-        match = re.compile('\.pdf')
+        match = re.compile("\.pdf")
 
         print('Getting PDF url...')
 
         try:
             r = requests.get(url, timeout=5)
             page = BeautifulSoup(r.text)
-        except Exception:
+        except requests.exceptions.RequestException:
             print('PDF Problem')
             return pdflink
 
@@ -349,6 +371,7 @@ def findpdf(url):
 
 
 def expandname(name):
+    """Reads a chemical name and expands concatenation terms such as parentheses to full chemical formula"""
     op = re.search("\(", name)
     cl = re.search("\)", name)
 
@@ -369,6 +392,7 @@ def expandname(name):
 
 
 def updatesc(searchcriteria):
+    """Checks for repeats in search criteria and expands condensed chemical names"""
     upcrit = []
     for n in range(len(searchcriteria)):
         marker = 0
@@ -402,8 +426,10 @@ def updatesc(searchcriteria):
 
     return upcrit
 
+
 def removerepeats(mpresults):
-    midresults=[]
+    """Removes repeats in mpresults"""
+    midresults = []
 
     for search in mpresults:
         for result in search:
@@ -412,13 +438,13 @@ def removerepeats(mpresults):
     upresults = []
     for a in range(len(midresults)):
         marker = False
-        for n in range(a + 1,len(midresults)):
+        for n in range(a + 1, len(midresults)):
             for key in midresults[a].keys():
                 if midresults[a][key] != midresults[n][key]:
-                    marker=True
+                    marker = True
                     break
                 else:
-                    marker=False
+                    marker = False
             if not marker:
                 break
         if marker:
@@ -426,39 +452,45 @@ def removerepeats(mpresults):
 
     return [upresults]
 
+
 def smartconstraint(mpresults):
-    cations = set(['Ba','Sr','La','Ca','K','Na','Li','Sc','Y','Pb','Bi'])
+    """
+    Removes uninteresting factors from mpresults
+    Each 'passing' result must have a member from trmetals and anions
+    If the chemical formula contains a member of electroneg, the contrmetals are valid trmetals as well
+    """
+    cations = {'Ba', 'Sr', 'La', 'Ca', 'K', 'Na', 'Li', 'Sc', 'Y', 'Pb', 'Bi'}
 
-    trmetals = set(['Ti','V','Cr','Mn','Fe','Co','Ni',
-               'Zr','Nb','Mo','Tc','Ru','Rh','Pd'])
-    anions = set(['N','P','As','O','S','Se','Te','F','Cl','B','I','Sb','Ge','Sr','C','B'])
+    trmetals = {'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd'}
+    anions = {'N', 'P', 'As', 'O', 'S', 'Se', 'Te', 'F', 'Cl', 'B', 'I', 'Sb', 'Ge', 'Sr', 'C', 'B'}
 
-    contrmetals = ['Cu','Ag','Au']
-    electroneg = ['O','S','F','Cl','Br']
+    contrmetals = ['Cu', 'Ag', 'Au']
+    electroneg = ['O', 'S', 'F', 'Cl', 'Br']
 
-    newMP = []
+    newmp = []
     for search in mpresults:
         for result in search:
             composition = set(result['unit_cell_formula'].keys())
             if len(composition.intersection(anions)) != 0:
                 if len(composition.intersection(trmetals)) != 0:
-                    newMP.append(result)
+                    newmp.append(result)
                 elif len(composition.intersection(electroneg)) != 0 and len(composition.intersection(contrmetals)):
-                    newMP.append(result)
+                    newmp.append(result)
 
-    return [newMP]
+    return [newmp]
+
 
 def removeconstrainedmp(mpresults, constraints):
-
+    """Removes values in mpresults according to set constraints"""
     for constrain in constraints:
         midresults = []
 
         for search in mpresults:
             for result in search:
                 if (constrain['bgap'][0] is not None and constrain['bgap'][0] > result['band_gap']) or \
-                    (constrain['bgap'][1] is not None and constrain['bgap'][1] < result['band_gap']) or \
-                    (constrain['mag'][0] is not None and constrain['mag'][0] > result['total_magnetization']) or \
-                    (constrain['mag'][1] is not None and constrain['mag'][1] < result['total_magnetization']):
+                        (constrain['bgap'][1] is not None and constrain['bgap'][1] < result['band_gap']) or \
+                        (constrain['mag'][0] is not None and constrain['mag'][0] > result['total_magnetization']) or \
+                        (constrain['mag'][1] is not None and constrain['mag'][1] < result['total_magnetization']):
                     pass
                 else:
                     midresults.append(result)
@@ -467,14 +499,15 @@ def removeconstrainedmp(mpresults, constraints):
 
     return mpresults
 
-def removeconstrainedwok(mpresults, wokresults, constraints):
 
+def removeconstrainedwok(mpresults, wokresults, constraints):
+    """Removes values in wokresults and mpresults according to set constraints"""
     for constrain in constraints:
         midresults = []
 
         for result in wokresults:
             if (constrain['pub'][0] is not None and constrain['pub'][0] > result[0]['numResults']) or \
-                (constrain['pub'][1] is not None and constrain['pub'][1] < result[0]['numResults']):
+                    (constrain['pub'][1] is not None and constrain['pub'][1] < result[0]['numResults']):
                 pass
             else:
                 midresults.append(result)
@@ -486,19 +519,21 @@ def removeconstrainedwok(mpresults, wokresults, constraints):
         for result in search:
             midmp.append(result)
 
-    newMP = []
+    newmp = []
 
     for j in range(len(midmp)):
         for i in range(len(wokresults)):
             if midmp[j]['material_id'] == wokresults[i][0]['material_id']:
-                newMP.append(midmp[j])
+                newmp.append(midmp[j])
 
-    return [newMP], wokresults
+    return [newmp], wokresults
+
 
 def getsearchdata(searchparameters, doclimit=10):
-    #  General Search of searchParameters
-    #  Searches WoK and journal pages for all result data; Returns all relevant search data
-    #  Example: searchParameters='TITLE:BaVS3 AND Topic:magnetism OR TOPIC:ferromagnetic'
+    """
+    Searches WoK and journal pages for all result data; Returns all relevant search data
+    Example: searchParameters='TITLE:BaVS3 AND Topic:magnetism OR TOPIC:ferromagnetic'
+    """
 
     spdict = getsearchparameterdict(searchparameters)
 
@@ -508,8 +543,8 @@ def getsearchdata(searchparameters, doclimit=10):
     result_url = 'N/A'
     counter = 0
 
-    pingWoK = True
-    while pingWoK:
+    pingwok = True
+    while pingwok:
         try:
             s = requests.Session()
             s.get(r'http://www.webofknowledge.com', timeout=10)
@@ -562,14 +597,15 @@ def getsearchdata(searchparameters, doclimit=10):
             print('WoK Connection Error #' + str(counter))
             counter += 1
         else:
-            if result_html == None or result_url == None:
+            if result_html is None or result_url is None:
                 print('WoK Connection Error #' + str(counter))
                 counter += 1
             else:
-                pingWoK = False
+                pingwok = False
 
-        if counter>10:
-            raise('WoK Error')
+        if counter > 10:
+            print('WoK Error')
+            raise
 
     resultsoup = BeautifulSoup(result_html)
 
@@ -592,7 +628,7 @@ def getsearchdata(searchparameters, doclimit=10):
         m = 1
         counter = 0
 
-        while m < (docnum+1):
+        while m < (docnum + 1):
             try:
                 pagenum = (m - 1) % 10 + 1
                 print('Document ' + str(m) + ' loading...')
@@ -610,8 +646,9 @@ def getsearchdata(searchparameters, doclimit=10):
                 m -= 1
                 counter += 1
 
-                if counter>10:
-                    raise('Connection Error')
+                if counter > 10:
+                    print('Connection Error')
+                    raise
             else:
                 page_html = page_r.text
 
@@ -665,7 +702,8 @@ def getsearchdata(searchparameters, doclimit=10):
 
 
 def getkeyfrequency(data, keyword):
-    #  Counts number of occurrences of keyword within the result abstracts; returns a list of integer values
+    """Counts number of occurrences of keyword within the result abstracts; returns a list of integer values"""
+
     findresult = []
 
     for n in range(len(data[1])):
@@ -680,7 +718,7 @@ def getkeyfrequency(data, keyword):
 
 
 def getkeylist(data, keywords):
-    # Iterates getKeyFrequency for each keyword; returns a dictionary of frequency lists corresponding to each keyword
+    """Iterates getKeyFrequency for each keyword; returns a dictionary of frequency lists corresponding to keywords"""
 
     datadict = {}
     for n in keywords:
@@ -690,6 +728,7 @@ def getkeylist(data, keywords):
 
 
 def generateabstractwc(searchdata):
+    """Creates and stores WordCloud images"""
     stop = {'compound', 'angstrom', 'measurements', 'respectively', 'temperature', 't', 'k', 'show', 'element', 'ions',
             'degrees', 'structure', 'observed', 'c', 'p', 'n', 'a', 'pressure', 'nm', 'atoms', 'compounds', 'x'}
     try:
@@ -721,4 +760,3 @@ def generateabstractwc(searchdata):
     wc.generate(absstring)
 
     return wc
-

@@ -1,3 +1,6 @@
+"""Defines frontend functions required for searching materials databases"""
+
+# coding=utf-8
 
 from __future__ import print_function
 
@@ -11,6 +14,7 @@ import itertools
 
 try:
     import wordcloud
+
     wcexists = True
 except ImportError:
     wcexists = False
@@ -20,7 +24,14 @@ mainKeywords = ['superconduct', 'conduct', 'resist', 'metal', 'insulator', 'dope
                 'charge density wave', 'band structure', 'susceptibility', 'NMR',
                 'nuclear magnetic resonance', 'neutron', 'mu-SR', 'x-ray']
 
+
 def readrawicsd(filename):
+    """
+    Reads raw ICSD CSV files to return string of icsd_id numbers that can be read by parsehtmlinput
+
+    :param filename: Filename of raw ICSD file (without .csv)
+    :return: String of ICSD_ID numbers
+    """
     with open(os.path.join(os.getcwd(), 'rawICSD', filename + '.csv'), 'rb') as f:
         reader = list(csv.reader(f))
     icsdlist = []
@@ -35,11 +46,18 @@ def readrawicsd(filename):
             else:
                 icsd_id += character
 
-    resultstring='#' + '; #'.join(icsdlist)
+    resultstring = '#' + '; #'.join(icsdlist)
 
     return resultstring
 
+
 def readsearchcriteria(filename):
+    """
+    Reads CSV files to return string of preset material names that can be read by parsehtmlinput
+
+    :param filename: Filename of searchcriteria file (wihout .csv)
+    :return: String of material search names
+    """
     with open(os.path.join(os.getcwd(), 'search_criteria', filename + '.csv'), 'rb') as f:
         reader = list(csv.reader(f))
         rowlist = []
@@ -48,11 +66,9 @@ def readsearchcriteria(filename):
                 rowdict = {'material': row[0]}
 
                 for n in range(3, 10):
-                    if row[n] == 'monoclinic' or row[n] == 'cubic' or row[n] == 'trigonoal' or \
-                                    row[n] == 'hexagonal' or row[n] == 'tetragonal' or len(row[n]) > 4:
-
-                        rowdict.update({'crystalsystem': row[n], 'spacegroup': row[n + 1],
-                                   'bandgap': row[n + 2]})
+                    if row[n] == 'monoclinic' or row[n] == 'cubic' or row[n] == 'trigonoal' or row[n] == 'hexagonal' or \
+                            row[n] == 'tetragonal' or len(row[n]) > 4:
+                        rowdict.update({'crystalsystem': row[n], 'spacegroup': row[n + 1], 'bandgap': row[n + 2]})
                         break
                 rowlist.append(rowdict)
 
@@ -60,8 +76,17 @@ def readsearchcriteria(filename):
 
 
 def parsempdata(data, name, querystring, keystring):
+    """
+    Accepts input data and parses the information such that its readable in html table format
+
+    :param data: mpdata from handlehtmlsearch_mp
+    :param name: Name of search
+    :param querystring: Query string from HTML input
+    :param keystring: Keyword string from HTML input
+    :return: String of HTML MP Results table data
+    """
     resultstring = ''
-    i=0
+    i = 0
     for search in data:
         for result in search:
             cifpath = os.path.join(os.getcwd(), 'cifs', result['pretty_formula'] + '.cif')
@@ -69,8 +94,11 @@ def parsempdata(data, name, querystring, keystring):
             with open(cifpath, 'wb') as f:
                 f.write(result['cif'])
 
-            resultstring += '<tr class="results" value="' + str(i) + '" id="mpresult' + str(i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
-            resultstring += '<td class="results"><a href="https://www.materialsproject.org/materials/' + result['material_id'] + '/" target="_blank">' + result['pretty_formula'] + '</a></td>'
+            resultstring += '<tr class="results" value="' + str(i) + '" id="mpresult' + str(
+                i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(
+                i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+            resultstring += '<td class="results"><a href="https://www.materialsproject.org/materials/' + result[
+                'material_id'] + '/" target="_blank">' + result['pretty_formula'] + '</a></td>'
             resultstring += '<td class="results">' + result['full_formula'] + '</td>'
             resultstring += '<td class="results">' + str(result['total_magnetization'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['is_hubbard']) + '</td>'
@@ -81,12 +109,19 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
             resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '</td>'
-            resultstring += '<td class="results"><a href="/getcif?cif=' + result['pretty_formula'] + '" target="_blank">CIF</a></td>'
-            resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + result['material_id'] + '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
+            resultstring += '<td class="results"><a href="/getcif?cif=' + result[
+                'pretty_formula'] + '" target="_blank">CIF</a></td>'
+            resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + \
+                            result['material_id'] + \
+                            '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
             resultstring += '</tr>'
 
-            resultstring += '<tr class="results selected" value="' + str(i) + '" style="display:none" value="full" id="mpresult' + str(i) + '_full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
-            resultstring += '<td class="results"><a href="https://www.materialsproject.org/materials/' + result['material_id'] + '/" target="_blank">' + result['pretty_formula'] + '</a></td>'
+            resultstring += '<tr class="results selected" value="' + str(
+                i) + '" style="display:none" value="full" id="mpresult' + str(
+                i) + '_full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(
+                i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+            resultstring += '<td class="results"><a href="https://www.materialsproject.org/materials/' + result[
+                'material_id'] + '/" target="_blank">' + result['pretty_formula'] + '</a></td>'
             resultstring += '<td class="results">' + result['full_formula'] + '</td>'
             resultstring += '<td class="results">' + str(result['total_magnetization'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['is_hubbard']) + '</td>'
@@ -97,18 +132,30 @@ def parsempdata(data, name, querystring, keystring):
             resultstring += '<td class="results">' + str(result['density'])[:6] + '</td>'
             resultstring += '<td class="results">' + str(result['volume'])[:6] + '</td>'
             try:
-                resultstring += '<td class="results">Sym: ' + result['spacegroup']['symbol'] + '<br> Num:  ' + str(result['spacegroup']['number']) + '<br>PG: ' + result['spacegroup']['point_group'] + '<br>Sys: ' + result['spacegroup']['crystal_system'] + '<br>Hall: ' + str(result['spacegroup']['hall']) + '</td>'
-            except:
+                resultstring += '<td class="results">Sym: ' + result['spacegroup']['symbol'] + '<br> Num:  ' + str(
+                    result['spacegroup']['number']) + '<br>PG: ' + result['spacegroup']['point_group'] + '<br>Sys: ' + \
+                    result['spacegroup']['crystal_system'] + '<br>Hall: ' + str(
+                    result['spacegroup']['hall']) + '</td>'
+            except KeyError:
                 resultstring += '<td class="results">' + result['spacegroup']['symbol'] + '</td>'
-            resultstring += '<td class="results"><a href="/getcif?cif=' + result['pretty_formula'] + '" target="_blank">CIF</a></td>'
-            resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + result['material_id'] + '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
+            resultstring += '<td class="results"><a href="/getcif?cif=' + result[
+                'pretty_formula'] + '" target="_blank">CIF</a></td>'
+            resultstring += '<td class="results"><button onclick="window.open(\'https://www.materialsproject.org/materials/' + \
+                            result['material_id'] + \
+                            '/jsmol\',\'newwindow\',\'width=600,height=800\'); return false;">Open Model</button>'
             resultstring += '</tr>'
 
-            i+=1
+            i += 1
     return [resultstring, name, querystring, keystring]
 
 
 def parsewokkeys(keywords):
+    """
+    Parses keyword string such that its readable as header of WoK Table in the HTML
+
+    :param keywords: Array of keywords
+    :return: String of HTML <td> objects
+    """
     resultstring = '<td class="resultTitle">Material</td><td class="resultTitle">Publications</td>'
 
     for key in keywords:
@@ -118,15 +165,31 @@ def parsewokkeys(keywords):
 
 
 def parsewokdata(keywords, mpdata, wokdata, keydata, name, querystring, keystring):
+    """
+    Accepts input data and parses the information such that its readable in html table format
+
+    :param keywords: Array of keywords
+    :param mpdata: mpresults from handlehtmlsearch_mp
+    :param wokdata: wokresults from handlehtmlsearch_wok
+    :param keydata: keyresults from handlehtmlsearch_wok
+    :param name: Search name
+    :param querystring: Query string from HTML input
+    :param keystring: Key string from HTML input
+    :return: String of HTML WoK Results table data
+    """
     resultstring = ''
 
     for i in range(len(wokdata)):
         hidestring = ''
-        resultstring += '<tr value="' + str(i) + '" class="results" id="wokresult' + str(i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+        resultstring += '<tr value="' + str(i) + '" class="results" id="wokresult' + str(
+            i) + '_con" onclick="expand(\'con\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(
+            i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
 
-        resultstring += '<td class="results"><a href="' + wokdata[i][0]['searchURL'] + '" target="_blank">' + wokdata[i][0]['pretty_formula'] + '</a></td>'
+        resultstring += '<td class="results"><a href="' + wokdata[i][0]['searchURL'] + '" target="_blank">' + \
+                        wokdata[i][0]['pretty_formula'] + '</a></td>'
         resultstring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
-        hidestring += '<td class="results"><a href="' + wokdata[i][0]['searchURL'] + '" target="_blank">' + wokdata[i][0]['pretty_formula'] + '</a></td>'
+        hidestring += '<td class="results"><a href="' + wokdata[i][0]['searchURL'] + '" target="_blank">' + \
+                      wokdata[i][0]['pretty_formula'] + '</a></td>'
         hidestring += '<td class="results">' + str(wokdata[i][0]['numResults']) + '</td>'
 
         for key in keydata[i].keys():
@@ -136,23 +199,33 @@ def parsewokdata(keywords, mpdata, wokdata, keydata, name, querystring, keystrin
                 paper = keydata[i][key][m]
                 if paper != 0:
                     numpapers += 1
-                    hidestring+='<a href="' + wokdata[i][1][m]['DOIlink'] + '" target="_blank">(' + str(paper) + ')</a> '
+                    hidestring += '<a href="' + wokdata[i][1][m]['DOIlink'] + '" target="_blank">(' + str(
+                        paper) + ')</a> '
 
             resultstring += '<td class="results">'
             if numpapers != 0:
                 resultstring += str(numpapers)
             resultstring += '</td>'
-            hidestring+='</td>'
+            hidestring += '</td>'
 
         resultstring += '</tr>'
 
-        resultstring += '<tr value="' + str(i) + '" class="results selected" style="display:none" id="wokresult' + str(i) + '_full" value="full" onclick="expand(\'full\', \'result' + str(i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
+        resultstring += '<tr value="' + str(i) + '" class="results selected" style="display:none" id="wokresult' + str(
+            i) + '_full" value="full" onclick="expand(\'full\', \'result' + str(
+            i) + '\')" onmouseover="hoveron(\'result' + str(i) + '\')" onmouseout="hoveroff(\'result' + str(i) + '\')">'
         resultstring += hidestring + '</tr>'
 
-    return [parsewokkeys(keywords), parsempdata(mpdata,name,querystring,keystring)[0], resultstring, name, querystring, keystring]
+    return [parsewokkeys(keywords), parsempdata(mpdata, name, querystring, keystring)[0], resultstring, name,
+            querystring, keystring]
 
 
 def parseprevload(prevload):
+    """
+    Parses prevload list into readable HTML option objects
+
+    :param prevload: Array of txt filenames
+    :return: HTML String of <option> objects
+    """
     resultstring = ''
 
     for f in prevload:
@@ -162,6 +235,15 @@ def parseprevload(prevload):
 
 
 def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
+    """
+    Parses html input and searches Materials Project or Cache for relevant data
+
+    :param querystring: Query string from HTML input
+    :param keywordstring: Keyword string from HTML input
+    :param cache: Boolean for whether or not cache should be used to load data
+    :param smartconstrain: Boolean for whether or not smartconstrain should be used to constrain data
+    :return: Tuple corresponding to various result data
+    """
     queries, permqueries, constraints, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
 
     with open('mpRecord.json', 'rb') as record:
@@ -179,14 +261,14 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
     for i in range(len(queries)):
         query = queries[i]
         if query in rlist['queries'].keys() and cache:
-            print('loading mp for ' + query + ' (' + str(i+1) + '/' + str(len(queries)) + ')')
+            print('loading mp for ' + query + ' (' + str(i + 1) + '/' + str(len(queries)) + ')')
             mpresults.append(rlist['queries'][query])
         else:
-            print('searching mp for ' + query + ' (' + str(i+1) + '/' + str(len(queries)) + ')')
+            print('searching mp for ' + query + ' (' + str(i + 1) + '/' + str(len(queries)) + ')')
 
             try:
                 if query[0] == '#':
-                    result = searchWoKTools.postmaterialsproject({'criteria':{'icsd_ids':{'$in':[int(query[1:])]}}})
+                    result = searchWoKTools.postmaterialsproject({'criteria': {'icsd_ids': {'$in': [int(query[1:])]}}})
                 else:
                     result = searchWoKTools.getmaterialsproject(query)
             except:
@@ -215,7 +297,7 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
 
         for n in range(len(permlist)):
             elemlist = permlist[n]
-            divlen = lenperms/len(elemlist)
+            divlen = lenperms / len(elemlist)
             listmarker = 0
 
             for rep in range(repeat):
@@ -259,24 +341,34 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
 
 
 def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartconstrain):
+    """
+    Parses html input, executes handlehtmlsearch_mp, and searches WoK for relevant data
+
+    :param querystring: Query string from HTML input
+    :param keywordstring: Keyword string from HTML input
+    :param searchlimit: Search limit integer for WoK (Identifies how maximum # of results to iterate through)
+    :param cache: Boolean for whether or not cache should be used to load data
+    :param smartconstrain: Boolean for whether or not smartconstrain should be used to constrain data
+    :return: Tuple corresponding to various result data
+    """
     mpsearch, keywords, constraints = handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain)
 
     with open('wokRecord.json', 'rb') as record:
         try:
             wlist = json.load(record)
         except ValueError:
-            wlist={}
+            wlist = {}
 
-    searchtotal=0
+    searchtotal = 0
     for search in mpsearch:
         searchtotal += len(search)
 
     wokresults = []
-    i=0
+    i = 0
 
     for search in mpsearch:
         for n in search:
-            iterinput=[]
+            iterinput = []
             for m in n['unit_cell_formula'].keys():
                 iterinput.append(m + str(int(n['unit_cell_formula'][m])))
 
@@ -317,6 +409,18 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartco
 
 
 def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, cache, smartconstrain):
+    """
+    Parses html input, executes handlehtmlsearch_wok, generates CSVs and Word clouds for relevant data
+
+    :param querystring: Query string from HTML input
+    :param keywordstring: Keyword string from HTML input
+    :param searchlimit: Search limit integer for WoK (Identifies how maximum # of results to iterate through)
+    :param searchname: Search name string
+    :param cache: Boolean for whether or not cache should be used to load data
+    :param smartconstrain: Boolean for whether or not smartconstrain should be used to constrain data
+
+    :return: Filepath string of CSV and WC results
+    """
     fulltitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Full.csv')
     contitle = os.path.join(os.getcwd(), 'materialsSearchCSV-WC', searchname + 'Condensed.csv')
 
@@ -328,7 +432,8 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, ca
         fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        keywords, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartconstrain)
+        keywords, mpsearch, wokresults, keyresults = handlehtmlsearch_wok(querystring, keywordstring, searchlimit,
+                                                                          cache, smartconstrain)
 
         conheader = ['Material', 'Publications', 'Space Group', 'Calculated Band Gap']
         for n in keywords:
@@ -395,7 +500,7 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, ca
 
 
 def viewdata(data):
-    #  Prints out readable information of the output of getSearchData
+    """Prints out readable information of the output of getSearchData"""
 
     print('_' * 50)
     print('Number of Results: ' + str(data[0]['numResults']))
@@ -412,8 +517,10 @@ def viewdata(data):
 
 
 def savequerydata(searchcriteria, filename='', searchlimit=10):
-    # Iterates over queries and gathers search data for each query; saves .txt file of all data with JSON encoding
-    # If saveQueryData reaches an exception and escapes early, data gathered until that point is returned
+    """
+    Iterates over queries and gathers search data for each query; saves .txt file of all data with JSON encoding
+    If saveQueryData reaches an exception and escapes early, data gathered until that point is returned
+    """
 
     searchcriteria = searchWoKTools.updatesc(searchcriteria)
 
@@ -442,10 +549,12 @@ def savequerydata(searchcriteria, filename='', searchlimit=10):
 
 
 def generate_csv(filename='', datafile='queryData.txt', keywords=mainKeywords):
-    # Runs getKeyList for given keywords and sorts data accordingly
-    # Generates two CSV files constructed from the data within fileName+queryData.txt and the frequency lists
-    # fileName+MaterialsKeySearchCondensed.csv condenses the frequency list into a form viewable in one page
-    # fileName+MaterialsKeySearchFull.csv expands data and allows user to click direct links to journal web pages
+    """
+    Runs getKeyList for given keywords and sorts data accordingly
+    Generates two CSV files constructed from the data within fileName+queryData.txt and the frequency lists
+    fileName+MaterialsKeySearchCondensed.csv condenses the frequency list into a form viewable in one page
+    fileName+MaterialsKeySearchFull.csv expands data and allows user to click direct links to journal web pages
+    """
 
     fulltitle = os.path.join(os.getcwd(), 'searchWoKResults', filename + 'MaterialsKeySearchFull.csv')
     contitle = os.path.join(os.getcwd(), 'searchWoKResults', filename + 'MaterialsKeySearchCondensed.csv')
@@ -527,6 +636,7 @@ def generate_csv(filename='', datafile='queryData.txt', keywords=mainKeywords):
 
 
 def automate_search(filename, searchlimit):
+    """Automates search for preset search criteria"""
     sc = readsearchcriteria(filename)
 
     data = savequerydata(sc, filename, searchlimit)
@@ -536,4 +646,3 @@ def automate_search(filename, searchlimit):
         return data
 
     generate_csv(filename)
-
