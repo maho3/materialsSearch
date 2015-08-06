@@ -79,6 +79,17 @@
         <tr style="height:15px"></tr>
         <tr>
             <td style="width:10px"></td>
+            <td style="width:130px; text-align: left">Add rawICSD: </td>
+            <td style="text-align: left" colspan="5">
+                <select id="ICSDname">
+                    [rawICSD]
+                </select>
+                <button id="loadICSD">Load</button>
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <td style="width:10px"></td>
             <td style="width:130px; text-align: left">Add Permutations: </td>
         </tr>
         <tr>
@@ -118,7 +129,7 @@
             <td style="width:10px"></td>
             <td style="text-align:left">Add Constraint:</td>
             <td colspan="6" style="text-align:left">
-                Band Gap: <input type="number" step="0.1" style="width:50px" id="bandmin"> to <input type="number"step="0.1" style="width:50px" id="bandmax"> ||
+                Band Gap: <input type="number" step="0.1" style="width:50px" id="bandmin"> to <input type="number" step="0.1" style="width:50px" id="bandmax"> ||
                 Magnetization: <input type="number" style="width:50px" id="magmin"> to <input type="number" style="width:50px" id="magmax"> <br>
                 Number of Publications: <input type="number" style="width:50px" id="pubmin" min="0"> to <input type="number" style="width:50px" id="pubmax" min="0"><br>
                 Element Composition:

@@ -57,8 +57,14 @@ def returnhtml():
     except OSError:
         if not os.path.isdir('materialsSearchLoadFiles'):
             raise
+    try:
+        os.makedirs('rawICSD')
+    except OSError:
+        if not os.path.isdir('rawICSD'):
+            raise
 
     prevload = os.listdir(os.path.join(os.getcwd(), 'materialsSearchLoadFiles'))
+    rawicsd = os.listdir(os.path.join(os.getcwd(), 'rawICSD'))
 
     with open('materialsSearch.html') as f:
         rawhtml = f.read()
@@ -70,6 +76,7 @@ def returnhtml():
     html = rawhtml.replace('[JQUERY]', jqueryjs)
     html = html.replace('[PREVLOAD]', searchWoK.parseprevload(prevload))
     html = html.replace('[MSJS]', msjs)
+    html = html.replace('[rawICSD]', searchWoK.parseprevload(rawicsd))
 
     return html
 
@@ -89,6 +96,12 @@ def grabpresets():
 
     return str(setnames)[2:-2]
 
+@app.route("/grabICSD")
+def grabicsd():
+    """Returns loadstring of preset material names"""
+    name = request.args.get('set')
+
+    return searchWoK.readrawicsd(name[:-4])
 
 @app.route("/getcif")
 def getcif():

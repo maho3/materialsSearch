@@ -289,6 +289,14 @@ $(document).ready(function() {
         keywords=data.split("', '");
     });
 
+    $('#loadICSD').click(function(){
+        event.preventDefault();
+
+        $.get("/grabICSD", {set:$('#ICSDname option:selected').text()}, function(data){
+            $('[name="queries"]').val(data);
+        });
+    });
+
     $('#showmp').click(function(){
         if ($(this).text()=='Display MP Results'){
             $(this).text('Hide MP Results');
