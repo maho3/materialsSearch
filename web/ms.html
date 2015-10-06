@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    table,th,td    {height:20px;
+                text-align:center;
+                width: 100px;
+                vertical-align: top;
+                border-collapse:collapse;}
+
+    th          {font-size: 150%%;
+                font-weight: normal}
+
+    .results    {border: 1px solid black;
+                border-collapse:collapse;
+                vertical-align: middle}
+    .resultTitle{border: 1px solid black;
+                font-weight: bold;
+                white-space: nowrap}
+    .mpresultTitle{border: 1px solid black;
+                font-weight: bold;
+                white-space: nowrap;
+                cursor:pointer;
+                cursor:hand;}
+
+    .element     {border: 1px solid black;
+                width: 10px;
+                height: 10px;
+                cursor:pointer;
+                cursor:hand;
+                background:white}
+    .noelement   {width: 10px;
+                height: 10px;}
+
+    .highlight    {background-color: #CCFFFF}
+    .selected    {background-color: #CCFFCC}
+    .highlightselected    {background-color: #99FFCC}
+
+</style>
+<script>
+    [JQUERY]
+</script>
+<script>
+    [MSJS]
+</script>
+
+    <title>Materials Search</title>
+</head>
+
+<body>
+<h1><u>Materials Search</u></h1>
+
+<p>Searches <i>Materials Project</i> and <i>Web of Knowledge</i> for relevant data with respect to finding promising
+    new candidates for superconductivity.</p>
+
+<hr>
+<form method="post" action="/submit" id="ajaxform">
+    <table style="width:100%">
+        <tr>
+            <th colspan="7" style="text-align: left">Queries: </th>
+        </tr>
+        <tr>
+            <td colspan="7" style="text-align: left">Add chemical formulas to materials search query list seperated by
+                a semicolon ";". Click the checkboxes to add preset material sets or to check <i>Materials Project</i>
+                for permutations of elements.</td>
+        </tr>
+        <tr style="height: 10px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="width:130px; text-align: left">Add Sets:</td>
+            <td colspan="5" style="text-align: left">
+                <input type="checkbox" value="sulfides" onchange="addQuerySet(this)">sulfides
+                <input type="checkbox" value="selenides" onchange="addQuerySet(this)">selenides
+                <input type="checkbox" value="twoMetals" onchange="addQuerySet(this)">two metals
+                <input type="checkbox" value="oxides" onchange="addQuerySet(this)">oxides
+                <input type="checkbox" value="vanadates" onchange="addQuerySet(this)">vanadates
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="width:130px; text-align: left">Add rawICSD: </td>
+            <td style="text-align: left" colspan="5">
+                <select id="ICSDname">
+                    [rawICSD]
+                </select>
+                <button id="loadICSD">Load</button>
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="width:130px; text-align: left">Add Permutations: </td>
+        </tr>
+        <tr>
+            <td style="width:20px"></td>
+            <td colspan="4">
+                <table>
+                    <tr><td class="element">H</td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="element">He</td></tr>
+                    <tr><td class="element">Li</td><td class="element">Be</td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="element">B</td><td class="element">C</td><td class="element">N</td><td class="element">O</td><td class="element">F</td><td class="element">Ne</td></tr>
+                    <tr><td class="element">Na</td><td class="element">Mg</td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="noelement"></td><td class="element">Al</td><td class="element">Si</td><td class="element">P</td><td class="element">S</td><td class="element">Cl</td><td class="element">Ar</td></tr>
+                    <tr><td class="element">K</td><td class="element">Ca</td><td class="element">Sc</td><td class="element">Ti</td><td class="element">V</td><td class="element">Cr</td><td class="element">Mn</td><td class="element">Fe</td><td class="element">Co</td><td class="element">Ni</td><td class="element">Cu</td><td class="element">Zn</td><td class="element">Ga</td><td class="element">Ge</td><td class="element">As</td><td class="element">Se</td><td class="element">Br</td><td class="element">Kr</td></tr>
+                    <tr><td class="element">Rb</td><td class="element">Sr</td><td class="element">Y</td><td class="element">Zr</td><td class="element">Nb</td><td class="element">Mo</td><td class="element">Tc</td><td class="element">Ru</td><td class="element">Rh</td><td class="element">Pd</td><td class="element">Ag</td><td class="element">Cd</td><td class="element">In</td><td class="element">Sn</td><td class="element">Sb</td><td class="element">Te</td><td class="element">I</td><td class="element">Xe</td></tr>
+                    <tr><td class="element">Cs</td><td class="element">Ba</td><td class="noelement"></td><td class="element">Hf</td><td class="element">Ta</td><td class="element">W</td><td class="element">Re</td><td class="element">Os</td><td class="element">Ir</td><td class="element">Pt</td><td class="element">Au</td><td class="element">Hg</td><td class="element">Tl</td><td class="element">Pb</td><td class="element">Bi</td><td class="element">Po</td><td class="element">At</td><td class="element">Rn</td></tr>
+                    <tr><td class="element">Fr</td><td class="element">Ra</td><td class="noelement"></td><td class="element">Rf</td><td class="element">Db</td><td class="element">Sg</td><td class="element">Bh</td><td class="element">Hs</td><td class="element">Mt</td><td class="element">Ds</td><td class="element">Rg</td><td class="element">Cn</td></tr>
+                    <tr style="height:10px"></tr>
+                    <tr><td class="noelement"></td><td class="noelement"></td><td class="element">La</td><td class="element">Ce</td><td class="element">Pr</td><td class="element">Nd</td><td class="element">Pm</td><td class="element">Sm</td><td class="element">Eu</td><td class="element">Gd</td><td class="element">Tb</td><td class="element">Dy</td><td class="element">Ho</td><td class="element">Er</td><td class="element">Tm</td><td class="element">Yb</td><td class="element">Lu</td></tr>
+                    <tr><td class="noelement"></td><td class="noelement"></td><td class="element">Ac</td><td class="element">Th</td><td class="element">Pa</td><td class="element">U</td><td class="element">Np</td><td class="element">Pu</td><td class="element">Am</td><td class="element">Cm</td><td class="element">Bk</td><td class="element">Cf</td><td class="element">Es</td><td class="element">Fm</td><td class="element">Md</td><td class="element">No</td><td class="element">Lr</td></tr>
+                </table>
+            </td>
+            <td style="width:30px"></td>
+            <td colspan="2" style="text-align:left">
+                <u>Set</u><br>
+                <input type="radio" name="permset" value="A">A
+                <input type="text" name="permtext" id="permtextA"> <br>
+                <input type="radio" name="permset" value="B">B
+                <input type="text" name="permtext" id="permtextB"><br>
+                <input type="radio" name="permset" value="C">C
+                <input type="text" name="permtext" id="permtextC"><br>
+                <input type="radio" name="permset" value="D">D
+                <input type="text" name="permtext" id="permtextD">
+                <br> <br>
+                ABCD = <input type="text" name="permsum" id="permsum" readonly> <br>
+                <input type="button" name="addperm" id="addperm" value="Add Permutation">
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td style="text-align:left">Add Constraint:</td>
+            <td colspan="6" style="text-align:left">
+                Band Gap: <input type="number" step="0.1" style="width:50px" id="bandmin"> to <input type="number" step="0.1" style="width:50px" id="bandmax"> ||
+                Magnetization: <input type="number" style="width:50px" id="magmin"> to <input type="number" style="width:50px" id="magmax"> <br>
+                Number of Publications: <input type="number" style="width:50px" id="pubmin" min="0"> to <input type="number" style="width:50px" id="pubmax" min="0"><br>
+                Element Composition:
+                <button onclick="addCon(); return false;">Add Constraint</button>
+                <button onclick="remCon(); return false;">Remove Constraint</button>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td colspan="7" style="text-align:left">
+                <br>
+                <textarea name="queries" id="queries" rows="10" cols="60" placeholder="Enter queries here..."></textarea>
+            </td>
+        </tr>
+        <tr style="height:15px"></tr>
+        <tr>
+            <th colspan="6" style="text-align: left">Keywords: </th>
+        </tr>
+        <tr>
+            <td colspan="7" style="text-align: left">Add keywords to search for in scientific abstracts seperated by a semicolon ";".
+                For a default list of common relevant keywords, click 'Reset Default' below.</td>
+        </tr>
+        <tr style="height: 10px"></tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td colspan="7" style="text-align:left">
+                <textarea name="keywords" id="keywords" rows="10" cols="60" placeholder="Enter keywords here..."></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10px"></td>
+            <td colspan="2">
+                <button id="keyDefault" type="button" onclick="resetKeyDefault()">Reset Default</button>
+            </td>
+        </tr>
+        <tr style="height:25px"></tr>
+        <tr style="height:25px">
+            <td colspan="5" style="text-align:left">Enter a name for this search: <input type="text" name="searchname"></td>
+            <td colspan="2" style="text-align:left">Search limit: <input type="number" name="searchlimit" value="50"></td>
+        </tr>
+        <tr style="height:25px"></tr>
+        <tr style="height:25px">
+            <td colspan="5" style="text-align:left">Load a previous search:
+                <select id="prevLoad">
+                    [PREVLOAD]
+                </select>
+                <button type="submit" id="loadbutton" value="load">Load</button>
+            </td>
+            <td colspan="2" style="text-align:left">
+                <input type="checkbox" id="usecache" value="usecache" checked>Use Cache <br>
+                <input type="checkbox" id="smartconstrain" value="smartconstrain">Smart Constrain
+            </td>
+        </tr>
+        <tr>
+
+        </tr>
+        <tr style="height:25px"></tr>
+        <tr>
+            <td style="width:5px"></td>
+            <td colspan="5" style="text-align:left">
+                <button type="submit" id="mpbutton" value="mp">Search MP</button>
+                <button type="submit" id="wokbutton" value="wok">Search WoK</button>
+                <button type="submit" id="csvbutton" value="csv">Generate CSVs and WCs</button>
+            </td>
+        </tr>
+    </table>
+</form>
+<hr>
+<div>
+    <h2>Results:</h2>
+    <textarea id="serverstatus" rows="10" cols="60" placeholder="SERVER UPDATES HERE" readonly></textarea><br><br>
+    <button id="showmp">Display MP Results</button><button id="showwok">Display WoK Results</button><br><br>
+    <input id="sortElem" type="number" min="0" max="6"> <button onclick="sortbyElem()">Sort by Element</button><br><br>
+    
+    <button onclick="saveComments()">Save Comments</button><br><br>
+
+
+    MP: <span id="mptitle"></span><br>
+    <table class="results" id="mpresults" style="width:100%; display:none">
+        <thead>
+        <tr class="results">
+            <td class="resultTitle">Formula</td>
+            <td class="mpresultTitle" onclick="sortbyResults('fform','mp',this)">Full Formula</td>
+            <td class="mpresultTitle" onclick="sortbyResults('mag','mp',this)">Total Magnetization</td>
+            <td class="resultTitle">Is Hubbard</td>
+            <td class="mpresultTitle" onclick="sortbyResults('forme','mp',this)">Formation Energy (eV)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('ehull','mp',this)">E Above Hull (eV)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('gap','mp',this)">Band Gap (eV)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('nsites','mp',this)">Nsites</td>
+            <td class="mpresultTitle" onclick="sortbyResults('den','mp',this)">Density (gm/cc)</td>
+            <td class="mpresultTitle" onclick="sortbyResults('vol','mp',this)">Volume</td>
+            <td class="mpresultTitle" onclick="sortbyResults('sg','mp',this)">Spacegroup</td>
+            <td class="resultTitle">CIF</td>
+            <td class="resultTitle">Model</td>
+            <td class="resultTitle">Comments</td>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+    <br><br>
+    WoK: <span id="woktitle"></span><br>
+    <table class="results" id="wokresults" style="display:none">
+        <thead>
+        <tr class="results" id="wokcols"></tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
+<hr>
+
+
+</body>
+</html>
+         
