@@ -1,4 +1,4 @@
-"""Allows one to gather responses from matdb.json"""
+"""Toolbox for matdb.json"""
 
 import json
 
