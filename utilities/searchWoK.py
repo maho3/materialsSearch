@@ -32,7 +32,7 @@ def readrawicsd(filename):
     :param filename: Filename of raw ICSD file (without .csv)
     :return: String of ICSD_ID numbers
     """
-    with open(os.path.join(os.getcwd(), 'resources', 'rawICSD', filename + '.csv'), 'rb') as f:
+    with open(os.path.join(os.getcwd(), 'resources', 'rawICSD', filename + '.csv'), 'rt') as f:
         reader = list(csv.reader(f))
     icsdlist = []
     for row in reader:
@@ -58,7 +58,7 @@ def readsearchcriteria(filename):
     :param filename: Filename of searchcriteria file (wihout .csv)
     :return: String of material search names
     """
-    with open(os.path.join(os.getcwd(), 'resources', 'search_criteria', filename + '.csv'), 'rb') as f:
+    with open(os.path.join(os.getcwd(), 'resources', 'search_criteria', filename + '.csv'), 'rt') as f:
         reader = list(csv.reader(f))
         rowlist = []
         for row in reader:
@@ -85,7 +85,7 @@ def parsempdata(data, name, querystring, keystring):
     :param keystring: Keyword string from HTML input
     :return: String of HTML MP Results table data
     """
-    with open(os.path.join(os.getcwd(), 'resources', 'json','comments.json'), 'rb') as record:
+    with open(os.path.join(os.getcwd(), 'resources', 'json','comments.json'), 'rt') as record:
         comrec = record.read()
         try:
             comdict = json.loads(comrec)
@@ -98,7 +98,7 @@ def parsempdata(data, name, querystring, keystring):
         for result in search:
             cifpath = os.path.join(os.getcwd(), 'resources', 'cifs', result['pretty_formula'] + '.cif')
 
-            with open(cifpath, 'wb') as f:
+            with open(cifpath, 'wt') as f:
                 f.write(result['cif'])
 
             resultstring += '<tr class="results" value="' + str(i) + '" id="mpresult' + str(
@@ -259,7 +259,7 @@ def parseprevload(prevload):
 
 def handlehtmlsearch_save(comments):
     
-    with open('comments.json', 'rb') as record:
+    with open('comments.json', 'rt') as record:
         comrec = record.read()
         try:
             comdict = json.loads(comrec)
@@ -272,7 +272,7 @@ def handlehtmlsearch_save(comments):
         except KeyError:
             pass
             
-    with open(os.path.join(os.getcwd(), 'resources', 'json','comments.json'), 'wb') as record:
+    with open(os.path.join(os.getcwd(), 'resources', 'json','comments.json'), 'wt') as record:
         json.dump(comdict, record)
 
 def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
@@ -287,7 +287,7 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
     """
     queries, permqueries, constraints, keywords = searchWoKTools.parsehtmlinput(querystring, keywordstring)
 
-    with open(os.path.join(os.getcwd(), 'resources', 'json','mpRecord.json'), 'rb') as record:
+    with open(os.path.join(os.getcwd(), 'resources', 'json','mpRecord.json'), 'rt') as record:
         rec = record.read()
         try:
             rlist = json.loads(rec)
@@ -313,7 +313,7 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
                 else:
                     result = searchWoKTools.getmaterialsproject(query)
             except:
-                with open('mpRecord.json', 'wb') as record:
+                with open('mpRecord.json', 'wt') as record:
                     json.dump(rlist, record)
                 raise
             rlist['queries'][query] = result
@@ -362,13 +362,13 @@ def handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain):
                 try:
                     result = searchWoKTools.getmaterialsproject(search, len(query))
                 except:
-                    with open('mpRecord.json', 'wb') as record:
+                    with open('mpRecord.json', 'wt') as record:
                         json.dump(rlist, record)
                     raise
                 rlist['queries'][search] = result
                 mpresults.append(result)
 
-    with open(os.path.join(os.getcwd(), 'resources', 'json','mpRecord.json'), 'wb') as record:
+    with open(os.path.join(os.getcwd(), 'resources', 'json','mpRecord.json'), 'wt') as record:
         json.dump(rlist, record)
 
     mpresults = searchWoKTools.removerepeats(mpresults)
@@ -394,7 +394,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartco
     """
     mpsearch, keywords, constraints = handlehtmlsearch_mp(querystring, keywordstring, cache, smartconstrain)
 
-    with open(os.path.join(os.getcwd(), 'resources', 'json','wokRecord.json'), 'rb') as record:
+    with open(os.path.join(os.getcwd(), 'resources', 'json','wokRecord.json'), 'rt') as record:
         try:
             wlist = json.load(record)
         except ValueError:
@@ -429,7 +429,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartco
                 try:
                     searchdata = searchWoKTools.getsearchdata(searchparam, searchlimit)
                 except:
-                    with open('wokRecord.json', 'wb') as record:
+                    with open('wokRecord.json', 'wt') as record:
                         json.dump(wlist, record)
                     raise
 
@@ -439,7 +439,7 @@ def handlehtmlsearch_wok(querystring, keywordstring, searchlimit, cache, smartco
 
     mpsearch, wokresults = searchWoKTools.removeconstrainedwok(mpsearch, wokresults, constraints)
 
-    with open(os.path.join(os.getcwd(), 'resources', 'json','wokRecord.json'), 'wb') as record:
+    with open(os.path.join(os.getcwd(), 'resources', 'json','wokRecord.json'), 'wt') as record:
         json.dump(wlist, record)
 
     keyresults = []
@@ -469,7 +469,7 @@ def handlehtmlsearch_csv(querystring, keywordstring, searchlimit, searchname, ca
         if not os.path.exists(os.path.join(os.getcwd(), 'results', 'materialsSearchCSV-WC', searchname)):
             os.makedirs(os.path.join(os.getcwd(), 'results', 'materialsSearchCSV-WC', searchname))
 
-    with open(fulltitle, 'wb') as csvFull, open(contitle, 'wb') as csvCon:
+    with open(fulltitle, 'wt') as csvFull, open(contitle, 'wt') as csvCon:
         fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
@@ -568,7 +568,7 @@ def savequerydata(searchcriteria, filename='', searchlimit=10):
     i = 0
     querydata = []
     try:
-        with open(os.path.join(os.getcwd(), 'results', 'searchWoKResults', filename + 'queryData.txt'), 'wb') as output:
+        with open(os.path.join(os.getcwd(), 'results', 'searchWoKResults', filename + 'queryData.txt'), 'wt') as output:
             for criterion in searchcriteria:
                 i += 1
                 query = criterion['material']
@@ -601,7 +601,7 @@ def generate_csv(filename='', datafile='queryData.txt', keywords=mainKeywords):
     contitle = os.path.join(os.getcwd(), 'results', 'searchWoKResults', filename + 'MaterialsKeySearchCondensed.csv')
     datatitle = os.path.join(os.getcwd(), 'results', 'searchWoKResults', filename + datafile)
 
-    with open(fulltitle, 'wb') as csvFull, open(contitle, 'wb') as csvCon, open(datatitle, 'rb') as data:
+    with open(fulltitle, 'wt') as csvFull, open(contitle, 'wt') as csvCon, open(datatitle, 'rt') as data:
         fwriter = csv.writer(csvFull, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         cwriter = csv.writer(csvCon, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         querydata = json.load(data)

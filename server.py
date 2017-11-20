@@ -39,7 +39,7 @@ class ServerSentEvent(object):
         if not self.data:
             return ""
         lines = ["%s: %s" % (v, k)
-                 for k, v in self.desc_map.iteritems() if k]
+                 for k, v in self.desc_map.items() if k]
 
         return "%s\n\n" % "\n".join(lines)
 
@@ -110,7 +110,7 @@ def getcif():
 
     cifpath = os.path.join(os.getcwd(),'resources', 'cifs', cifname + '.cif')
 
-    with open(cifpath, 'rb') as f:
+    with open(cifpath, 'rt') as f:
         cif = f.read()
 
     return cif
@@ -136,7 +136,7 @@ def mainapp():
 
             print('Generating load of ' + loadsearch)
 
-            with open(os.path.join(os.getcwd(), 'resources', 'msLoad', loadsearch), 'rb') as f:
+            with open(os.path.join(os.getcwd(), 'resources', 'msLoad', loadsearch), 'rt') as f:
                 loaddata = load(f)
 
             if loadsearch[-7:] == '_mp.txt':
@@ -152,7 +152,7 @@ def mainapp():
                 sorttype = escape(d['sorttype'])
                 sortdir = bool(escape(d['sortdir']) == 'true')
 
-                with open(os.path.join(os.getcwd(), 'resources', 'msLoad', sortname), 'rb') as f:
+                with open(os.path.join(os.getcwd(), 'resources', 'msLoad', sortname), 'rt') as f:
                     sortdata = load(f)
 
                 sortlist = []
@@ -256,7 +256,7 @@ def mainapp():
 
             mpsearch, keys, constraints = searchWoK.handlehtmlsearch_mp(queries, keywords, usecache, smartconstrain)
 
-            with open(os.path.join(os.getcwd(), 'resources', 'msLoad', searchname), 'wb') as outfile:
+            with open(os.path.join(os.getcwd(), 'resources', 'msLoad', searchname), 'wt') as outfile:
                 dump([mpsearch, queries, keywords], outfile)
 
             response_body = dumps(searchWoK.parsempdata(mpsearch, searchname, queries, keywords))
@@ -280,7 +280,7 @@ def mainapp():
                 keys, mpdata, wokdata, keydata = searchWoK.handlehtmlsearch_wok(queries, keywords, int(searchlimit),
                                                                                 usecache, smartconstrain)
 
-                with open(os.path.join(os.getcwd(), 'resources', 'msLoad', searchname), 'wb') as outfile:
+                with open(os.path.join(os.getcwd(), 'resources', 'msLoad', searchname), 'wt') as outfile:
                     dump([keys, mpdata, wokdata, keydata, queries, keywords], outfile)
 
                 response_body = dumps(

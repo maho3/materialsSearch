@@ -9,8 +9,12 @@ __author__ = 'eager55'
 import requests
 from bs4 import BeautifulSoup
 import re
-from urlparse import urlparse
 import json
+
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 try:
     from wordcloud import WordCloud, STOPWORDS
@@ -205,7 +209,7 @@ def getsearchparameterdict(searchparameters):
 
     spdict = {}
 
-    for n in range(0, (len(plist) + 1) / 2):
+    for n in range(0, int((len(plist) + 1) / 2)):
         parameter = plist[2 * n].replace(':', ' ').split()
         parameterdict = {'value(hidInput' + str(n + 1) + ')': '',
                          'value(select' + str(n + 1) + ')': getsearchtype(parameter[0]),
@@ -213,7 +217,7 @@ def getsearchparameterdict(searchparameters):
 
         spdict.update(parameterdict)
 
-    for n in range(1, (len(plist) + 1) / 2):
+    for n in range(1, int((len(plist) + 1) / 2)):
         parameterrel = plist[2 * n - 1]
         reldict = {'value(bool_' + str(n) + '_' + str(n + 1) + ')': getreltype(parameterrel)}
 
